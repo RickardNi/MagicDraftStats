@@ -1,0 +1,93 @@
+/* Navigation container */
+.nav-bar-links {
+    display: flex;
+    flex: 1;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 2rem;
+    padding-left: 0;
+}
+
+/* Navigation links */
+.nav-bar-links .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.75rem 1.25rem;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    background: none;
+    position: relative;
+    min-height: 3.5rem;
+}
+
+/* Navigation icons */
+.nav-bar-links .nav-link .bi {
+    font-size: 1.125rem;
+    margin-right: 0.5rem;
+    color: inherit;
+}
+
+/* Hover state */
+.nav-bar-links .nav-link:hover,
+.nav-bar-links .nav-link:focus {
+    color: rgba(255, 255, 255, 0.9) !important;
+    background: transparent !important;
+    text-decoration: none !important;
+}
+
+.nav-bar-links .nav-link:hover *,
+.nav-bar-links .nav-link:focus * {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Active state */
+.nav-bar-links .nav-link.active,
+.nav-bar-links .nav-link[aria-current="page"] {
+    color: #ffffff !important;
+    background: transparent !important;
+    text-decoration: none !important;
+}
+
+.nav-bar-links .nav-link.active *,
+.nav-bar-links .nav-link[aria-current="page"] * {
+    color: orange !important;
+}
+
+@media (max-width: 767.98px) {
+    .nav-bar-links {
+        gap: 1.5rem;
+        justify-content: center !important;
+        position: relative;
+    }
+    
+    .nav-bar-links .nav-link {
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .nav-bar-links .nav-link .bi {
+        font-size: 1.5rem;
+        margin-right: 0 !important;
+    }
+
+    /* Settings dropdown positioning - keep to the right */
+    .nav-bar-links .dropdown {
+        position: absolute;
+        right: 0;
+        margin-left: auto;
+    }
+    
+    /* Hide text on mobile, show only icons */
+    .nav-bar-links .nav-link .nav-text {
+        display: none;
+    }
+    
+    /* Orange color for active icon on mobile */
+    .nav-bar-links .nav-link.active .bi,
+    .nav-bar-links .nav-link[aria-current="page"] .bi {
+        color: orange !important;
+    }
+}

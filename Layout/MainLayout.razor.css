@@ -1,0 +1,20 @@
+/* Tabler-style Top Navbar Container */
+.top-navbar {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    background-color: var(--main-bg-color);
+    z-index: 1000;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    min-height: 3.5rem;
+    
+    /* Override Bootstrap nav variables specifically in our navbar */
+    --bs-nav-link-color: rgba(255, 255, 255, 0.7);
+    --bs-nav-link-hover-color: rgba(255, 255, 255, 0.9);
+    --bs-navbar-color: rgba(255, 255, 255, 0.7);
+    --bs-navbar-hover-color: rgba(255, 255, 255, 0.9);
+}

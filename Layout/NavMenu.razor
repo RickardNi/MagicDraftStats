@@ -1,0 +1,110 @@
+﻿@using MagicDraftStats.Services
+@inject IBGStatsImportService BGStatsService
+@inject IGlobalFilterService GlobalFilterService
+
+<nav class="nav-bar-links d-flex align-items-center w-100">
+    <NavLink class="nav-link" href="" Match="NavLinkMatch.All" title="Dashboard">
+        <span class="bi bi-bar-chart-fill" aria-hidden="true"></span><span class="nav-text">Dashboard</span>
+    </NavLink>
+    <NavLink class="nav-link" href="plays" title="All Plays">
+        <span class="bi bi-list-ul" aria-hidden="true"></span><span class="nav-text">All Plays</span>
+    </NavLink>
+    <NavLink class="nav-link" href="players" title="Players">
+        <span class="bi bi-people-fill" aria-hidden="true"></span><span class="nav-text">Players</span>
+    </NavLink>
+    <NavLink class="nav-link" href="decks" title="Decks">
+        <span class="bi bi-stack" aria-hidden="true"></span><span class="nav-text">Decks</span>
+    </NavLink>
+    <NavLink class="nav-link" href="duration" title="Duration">
+        <span class="bi bi-clock" aria-hidden="true"></span><span class="nav-text">Duration</span>
+    </NavLink>
+    <div class="dropdown ms-auto">
+        <button class="btn btn-link nav-link dropdown-toggle d-flex align-items-center settings-dropdown-toggle" type="button" id="settingsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="bi bi-gear" aria-hidden="true"></span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end settings-dropdown-menu" aria-labelledby="settingsDropdown">
+            <li>
+                <NavLink class="dropdown-item d-flex align-items-center" href="import-export">
+                    <span class="bi bi-arrow-left-right me-2" aria-hidden="true"></span>Import / Export
+                </NavLink>
+            </li>
+            <li>
+                <NavLink class="dropdown-item d-flex align-items-center" href="tools">
+                    <span class="bi bi-tools me-2" aria-hidden="true"></span>Tools
+                </NavLink>
+            </li>
+            <li>
+                <NavLink class="dropdown-item d-flex align-items-center" href="arena">
+                    <span class="bi bi-laptop me-2" aria-hidden="true"></span>MTG Arena
+                </NavLink>
+            </li>
+            <li>
+                <NavLink class="dropdown-item d-flex align-items-center" href="rules">
+                    <span class="bi bi-journal-text me-2" aria-hidden="true"></span>Rules
+                </NavLink>
+            </li>
+            @if (availableVariants.Any())
+            {
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                    <h6 class="dropdown-header d-flex align-items-center">
+                        <span class="bi bi-funnel me-2" aria-hidden="true"></span>Variant Filters
+                    </h6>
+                </li>
+                @foreach (var variant in availableVariants)
+                {
+                    var displayVariant = string.IsNullOrWhiteSpace(variant) ? "<no variants>" : variant;
+                    var checkboxId = $"variant-{displayVariant.Replace(" ", "-").ToLower()}";
+                    <li class="px-3 py-1">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" 
+                                   id="@checkboxId" 
+                                   checked="@GlobalFilterService.IsVariantSelected(variant)"
+                                   @onchange="(e) => OnVariantFilterChanged(variant, e.Value)" />
+                            <label class="form-check-label small" for="@checkboxId">
+                                @displayVariant
+                            </label>
+                        </div>
+                    </li>
+                }
+            }
+            <li><hr class="dropdown-divider" /></li>
+            <li>
+                <a class="dropdown-item d-flex align-items-center" href="https://github.com/RickardNi/MagicDraftStats" target="_blank" rel="noopener noreferrer">
+                    <span class="bi bi-github me-2" aria-hidden="true"></span>GitHub
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+@code {
+    private List<string> availableVariants = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var allPlays = await BGStatsService.GetMagicPlaysAsync();
+
+        availableVariants = allPlays
+            .Select(p => p.Variant)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(v => v)
+            .ToList();
+    }
+
+    private void OnVariantFilterChanged(string variant, object? isChecked)
+    {
+        var selectedVariants = new HashSet<string>(GlobalFilterService.SelectedVariants);
+        
+        if (isChecked is bool checkedValue && checkedValue)
+        {
+            selectedVariants.Add(variant);
+        }
+        else
+        {
+            selectedVariants.Remove(variant);
+        }
+        
+        GlobalFilterService.SetVariantFilter(selectedVariants);
+    }
+}

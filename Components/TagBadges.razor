@@ -1,0 +1,30 @@
+@if (Tags.Any())
+{
+    <div class="@ContainerClass d-flex gap-1">
+        @foreach (var tag in Tags)
+        {
+            var badgeClass = tag switch
+            {
+                "Tour Winner" => "bg-success",
+                "Archived" => "bg-danger",
+                "Finalist" => "bg-warning",
+
+                "Arena" => "bg-primary",
+                "M" => "bg-info",
+                "B" => "bg-info",
+                "Not Owned" => "bg-secondary",
+
+                _ => "bg-dark"
+            };
+            <span class="badge @badgeClass">@tag</span>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public List<string> Tags { get; set; } = [];
+
+    [Parameter]
+    public string ContainerClass { get; set; } = "";
+} 

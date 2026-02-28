@@ -1,0 +1,366 @@
+﻿@page "/"
+@using MagicDraftStats.Components
+@using MagicDraftStats.Services
+@using MagicDraftStats.Models
+@inject IBGStatsImportService BGStatsService
+@inject IGlobalFilterService GlobalFilterService
+
+<PageTitle>Magic Deck Stats</PageTitle>
+
+<div class="container mt-2 mt-md-4">
+    <h1><i class="bi bi-bar-chart-fill me-4 d-none d-md-inline"></i>Magic Deck Stats</h1>
+    
+    @if (isLoading)
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-arrow-clockwise spin me-2"></i>Loading Magic: The Gathering data...
+        </div>
+    }
+    else if (errorMessage != null)
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i>@errorMessage
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-md-6 mb-4 mb-md-0">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-1-square"></i>First Player Win Rate
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (plays.Any())
+                        {
+                            var firstPlayerWins = plays.Count(p => p.PlayerScores.Any(ps => ps.IsWinner && ps.IsFirstPlayer));
+                            var firstPlayerLosses = plays.Count(p => p.PlayerScores.Any(ps => !ps.IsWinner && ps.IsFirstPlayer));
+                            var totalPlays = plays.Count;
+                            var firstPlayerWinRate = totalPlays > 0 ? (firstPlayerWins * 100.0 / totalPlays) : 0;
+                            var firstPlayerLossRate = totalPlays > 0 ? (firstPlayerLosses * 100.0 / totalPlays) : 0;
+                            
+                            <div class="d-flex justify-content-center">
+                                <ApexChart TItem="FirstPlayerStats"
+                                           Options="@firstPlayerChartOptions">
+                                    <ApexPointSeries TItem="FirstPlayerStats"
+                                                    Items="@firstPlayerStats"
+                                                    Name="Plays"
+                                                    SeriesType="SeriesType.Pie"
+                                                    XValue="@(e => e.Result)"
+                                                    YValue="@(e => e.Count)"
+                                                    PointColor="e => GetPointColor(e)"
+                                                    ShowDataLabels />
+                                </ApexChart>
+                            </div>
+                            
+                            <div class="row text-center mt-3">
+                                <div class="col-6">
+                                    <div class="text-success">
+                                        <div class="fw-bold">@firstPlayerWins</div>
+                                        <div class="small">Wins</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-danger">
+                                        <div class="fw-bold">@firstPlayerLosses</div>
+                                        <div class="small">Losses</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted">No plays found</p>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-graph-up"></i>Quick Stats
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Total Plays:</strong> @plays.Count</p>
+                        <p><strong>Total Decks Used:</strong> @(plays.Any() ? plays.SelectMany(p => p.PlayerScores).Select(ps => ps.Deck).Distinct().Count() : 0)</p>
+                        <p><strong>Total Players:</strong> @(plays.Any() ? plays.SelectMany(p => p.PlayerScores).Select(ps => ps.PlayerName).Distinct().Count() : 0)</p>
+                        <hr />
+                        @if (plays.Any())
+                        {
+                            var longestGame = plays.OrderByDescending(p => p.DurationInMinutes).First();
+                            var mostPlayedDeck = plays.SelectMany(p => p.PlayerScores)
+                                                     .GroupBy(ps => ps.Deck)
+                                                     .OrderByDescending(g => g.Count())
+                                                     .First();
+                            
+                            <p><strong>Average Duration:</strong> @plays.Average(p => p.DurationInMinutes).ToString("F1") minutes</p>
+                            <p><strong>Longest Game:</strong> @longestGame.DurationInMinutes minutes</p>
+                            <p><strong>Total Play Time:</strong> @Utilities.FormatTotalPlayTime(plays.Sum(p => p.DurationInMinutes))</p>
+                            <hr />
+                            <p><strong>Most Played Deck:</strong> <NavLink class="deck-link" href="@Utilities.GetDeckUrl(mostPlayedDeck.Key)">@mostPlayedDeck.Key</NavLink> (@mostPlayedDeck.Count() plays)</p>
+                        }
+                        else
+                        {
+                            <p class="text-muted">No plays found</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (plays.Any())
+        {
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-list-ul"></i>Recent Plays
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <PlaysTable Plays="@currentPagePlays" />
+
+                    @if (totalPages > 1)
+                    {
+                        <Pagination CurrentPage="@currentPage" TotalPages="@totalPages" OnPageChanged="HandlePageChanged" />
+                    }
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-trophy"></i>Top Players by Games Played
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Player</th>
+                                    <th>Plays</th>
+                                    <th>Decks Played</th>
+                                    <th>Wins</th>
+                                    <th>Win Rate</th>
+                                    <th>Most Played Deck</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    var playerStats = plays
+                                        .SelectMany(p => p.PlayerScores)
+                                        .GroupBy(ps => new { ps.PlayerName, ps.PlayerRefId })
+                                        .Select(g => new
+                                        {
+                                            PlayerName = g.Key.PlayerName,
+                                            PlayerRefId = g.Key.PlayerRefId,
+                                            GamesPlayed = g.Count(),
+                                            Wins = g.Count(ps => ps.IsWinner),
+                                            WinRate = g.Count(ps => ps.IsWinner) / (double)g.Count(),
+                                            UniqueDecks = g.Select(ps => ps.Deck).Distinct().Count(),
+                                            FavouriteDeck = g.GroupBy(ps => ps.Deck)
+                                                             .OrderByDescending(dg => dg.Count())
+                                                             .First().Key,
+                                            FavouriteDeckPlays = g.GroupBy(ps => ps.Deck)
+                                                                  .OrderByDescending(dg => dg.Count())
+                                                                  .First().Count()
+                                        })
+                                        .OrderByDescending(p => p.GamesPlayed)
+                                        .Take(10)
+                                        .ToList();
+
+                                    for (int i = 0; i < playerStats.Count; i++)
+                                    {
+                                        var player = playerStats[i];
+                                        <tr>
+                                            <td>
+                                                @if (i == 0)
+                                                {
+                                                    <span class="badge bg-warning">🥇</span>
+                                                }
+                                                else if (i == 1)
+                                                {
+                                                    <span class="badge bg-secondary">🥈</span>
+                                                }
+                                                else if (i == 2)
+                                                {
+                                                    <span class="badge" style="background-color: #cd7f32; color: white;">🥉</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">@(i + 1)</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <NavLink class="player-link" href="@Utilities.GetPlayerUrl(player.PlayerRefId)">
+                                                    <strong>@player.PlayerName</strong>
+                                                </NavLink>
+                                            </td>
+                                            <td>@player.GamesPlayed</td>
+                                            <td>@player.UniqueDecks</td>
+                                            <td>@player.Wins</td>
+                                            <td>
+                                                <span class="fw-bold @Utilities.GetWinRateColorForPlayer(player.WinRate)">@Utilities.FormatWinRate(player.WinRate)</span>
+                                            </td>
+                                            <td>
+                                                <NavLink class="deck-link" href="@Utilities.GetDeckUrl(player.FavouriteDeck)">@player.FavouriteDeck</NavLink> (@player.FavouriteDeckPlays)
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private bool isLoading = true;
+    private string? errorMessage;
+    private List<Play> plays = new();
+    private ApexChartOptions<FirstPlayerStats> firstPlayerChartOptions = new();
+    private List<FirstPlayerStats> firstPlayerStats = new();
+    private int currentPage = 1;
+    private int totalPages = 1;
+    private List<Play> currentPagePlays = new();
+
+    public class FirstPlayerStats
+    {
+        public string Result { get; set; } = string.Empty;
+        public int Count { get; set; }
+    }
+
+    protected override void OnInitialized()
+    {
+        GlobalFilterService.OnFilterChanged += OnFilterChanged;
+    }
+
+    public void Dispose()
+    {
+        GlobalFilterService.OnFilterChanged -= OnFilterChanged;
+    }
+
+    private async void OnFilterChanged()
+    {
+        await InvokeAsync(async () =>
+        {
+            await LoadData();
+            StateHasChanged();
+        });
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+            
+            plays = await BGStatsService.GetMagicPlaysAsync(GlobalFilterService.SelectedVariants);
+            
+            // Sort plays by date (newest first)
+            plays = plays.OrderByDescending(p => DateTime.Parse(p.Date)).ToList();
+            
+            // Initialize pagination
+            totalPages = (int)Math.Ceiling((double)plays.Count / 10);
+            UpdateCurrentPagePlays();
+            
+            // Configure chart options
+            ConfigureFirstPlayerChart();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading data: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+    
+    private void ConfigureFirstPlayerChart()
+    {
+        if (!plays.Any()) return;
+        
+        var firstPlayerWins = plays.Count(p => p.PlayerScores.Any(ps => ps.IsWinner && ps.IsFirstPlayer));
+        var firstPlayerLosses = plays.Count(p => p.PlayerScores.Any(ps => !ps.IsWinner && ps.IsFirstPlayer));
+        
+        firstPlayerChartOptions = new ApexChartOptions<FirstPlayerStats>
+        {
+            Chart = new Chart
+            {
+                Type = ChartType.Pie,
+                Height = 300,
+                FontFamily = "Roboto Condensed"
+            },
+            Legend = new Legend
+            {
+                Show = false
+            },
+            DataLabels = new DataLabels 
+            { 
+                Style = new DataLabelsStyle
+                {
+                    FontSize = "14px",
+                    FontWeight = "bold"
+                }
+            },
+            Responsive = new List<Responsive<FirstPlayerStats>>
+            {
+                new Responsive<FirstPlayerStats>
+                {
+                    Breakpoint = 480,
+                    Options = new ApexChartOptions<FirstPlayerStats>
+                    {
+                        Chart = new Chart { Width = 200, FontFamily = "Roboto Condensed" }
+                    }
+                }
+            }
+        };
+
+        firstPlayerStats = new List<FirstPlayerStats>
+        {
+            new FirstPlayerStats { Result = "Losses", Count = firstPlayerLosses },
+            new FirstPlayerStats { Result = "Wins", Count = firstPlayerWins }
+        };
+    }
+
+    private string GetPointColor(FirstPlayerStats stats)
+    {
+        return stats.Result == "Wins" ? "#28a745" : "#dc3545";
+    }
+
+    private void GoToPage(int page)
+    {
+        if (page >= 1 && page <= totalPages && page != currentPage)
+        {
+            currentPage = page;
+            UpdateCurrentPagePlays();
+        }
+    }
+
+    private void UpdateCurrentPagePlays()
+    {
+        var skip = (currentPage - 1) * 10;
+        currentPagePlays = plays.Skip(skip).Take(10).ToList();
+    }
+
+    private Task HandlePageChanged(int page)
+    {
+        currentPage = page;
+        UpdateCurrentPagePlays();
+        return Task.CompletedTask;
+    }
+}

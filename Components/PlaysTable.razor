@@ -1,0 +1,89 @@
+@using MagicDraftStats.Models
+@using MagicDraftStats.Services
+
+@if (Plays == null || !Plays.Any())
+{
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> No plays data available. Count: @(Plays?.Count ?? 0)
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th style="white-space: nowrap;">Date</th>
+                    <th>Duration</th>
+                    <th class="flag-icon-column"></th>
+                    <th>Winner</th>
+                    <th></th>
+                    <th class="flag-icon-column"></th>
+                    <th>Loser</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var play in Plays)
+                {
+                    var winner = play.PlayerScores.FirstOrDefault(p => p.IsWinner);
+                    var loser = play.PlayerScores.FirstOrDefault(p => !p.IsWinner);
+                    
+                    <tr>
+                        <td style="white-space: nowrap;">@DateTime.Parse(play.Date).ToString("yyyy-MM-dd")</td>
+                        <td>@(play.DurationInMinutes > 0 ? $"{play.DurationInMinutes} min" : "-")</td>
+                        <td class="flag-icon-column">
+                            @if (winner?.IsFirstPlayer == true)
+                            {
+                                <i class="bi bi-flag-fill text-warning" title="First Player"></i>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(winner?.Deck))
+                            {
+                                <NavLink class="deck-link text-success fw-bold" href="@Utilities.GetDeckUrl(winner.Deck)">@winner.Deck</NavLink>
+                            }
+                        </td>
+                        <td>
+                            @if (winner != null)
+                            {
+                                <NavLink class="player-link text-success" href="@Utilities.GetPlayerUrl(winner.PlayerRefId)">@winner.PlayerName</NavLink>
+                            }
+                            else
+                            {
+                                <span class="text-muted">No winner</span>
+                            }
+                        </td>
+                        <td class="flag-icon-column">
+                            @if (loser?.IsFirstPlayer == true)
+                            {
+                                <i class="bi bi-flag-fill text-warning" title="First Player"></i>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(loser?.Deck))
+                            {
+                                <NavLink class="deck-link text-danger fw-bold" href="@Utilities.GetDeckUrl(loser.Deck)">@loser.Deck</NavLink>
+                            }
+                        </td>
+                        <td>
+                            @if (loser != null)
+                            {
+                                <NavLink class="player-link text-danger" href="@Utilities.GetPlayerUrl(loser.PlayerRefId)">@loser.PlayerName</NavLink>
+                            }
+                            else
+                            {
+                                <span class="text-muted">No loser</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public List<Play> Plays { get; set; } = new();
+} 

@@ -105,28 +105,6 @@ public class BGStatsImportService(HttpClient httpClient, ILogger<BGStatsImportSe
         return await LoadBGStatsDataAsync();
     }
 
-    private static string CleanDeckPrefix(string deckName)
-    {
-        if (string.IsNullOrWhiteSpace(deckName))
-            return deckName;
-
-        const string battleDeckPrefix = "[Battle Deck] ";
-        const string battleDeckPrefixWithAsterisk = "[Battle Deck]* ";
-
-        if (deckName.StartsWith(battleDeckPrefixWithAsterisk, StringComparison.OrdinalIgnoreCase))
-        {
-            var cleanedName = deckName[battleDeckPrefixWithAsterisk.Length..];
-            return string.IsNullOrWhiteSpace(cleanedName) ? deckName : cleanedName;
-        }
-        if (deckName.StartsWith(battleDeckPrefix, StringComparison.OrdinalIgnoreCase))
-        {
-            var cleanedName = deckName[battleDeckPrefix.Length..];
-            return string.IsNullOrWhiteSpace(cleanedName) ? deckName : cleanedName;
-        }
-
-        return deckName;
-    }
-
     private async Task<BGStatsExport> LoadBGStatsDataAsync()
     {
         if (_cachedData != null)
@@ -238,7 +216,7 @@ public class BGStatsImportService(HttpClient httpClient, ILogger<BGStatsImportSe
                     playerScore.PlayerName = "Unknown Player";
                 }
 
-                playerScore.Deck = CleanDeckPrefix(playerScore.Deck);
+                playerScore.Deck = playerScore.Deck;
             }
         }
     }
@@ -296,8 +274,15 @@ public class BGStatsImportService(HttpClient httpClient, ILogger<BGStatsImportSe
                 playCountBeforeIgnoredFilter - _cachedData.Plays.Count, _cachedData.Plays.Count);
         }
 
-        // Temporary filter: only include Battle Decks variants
-        _cachedData.Plays = [.. _cachedData.Plays.Where(p => p.Variant.Contains("Battle Decks") && !p.Variant.Contains("Two-Headed Giant"))];
+        // Keep only Draft plays
+        var playCountBeforeDraftFilter = _cachedData.Plays.Count;
+        _cachedData.Plays = [.. _cachedData.Plays.Where(p => p.Variant.Contains("Draft", StringComparison.OrdinalIgnoreCase))];
+
+        if (playCountBeforeDraftFilter - _cachedData.Plays.Count > 0)
+        {
+            _logger.LogInformation("Removed {RemovedPlayCount} non-Draft plays, kept {KeptPlayCount} Draft plays",
+                playCountBeforeDraftFilter - _cachedData.Plays.Count, _cachedData.Plays.Count);
+        }
 
         // Keep only players that are referenced in the remaining plays
         var playerIdsInPlays = _cachedData.Plays
@@ -365,10 +350,6 @@ public class BGStatsImportService(HttpClient httpClient, ILogger<BGStatsImportSe
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        // Exclude MTG Arena variants from the default filter
-        var defaultVariants = allVariants.Where(v => 
-            !v.Contains("MTG Arena", StringComparison.OrdinalIgnoreCase)).ToList();
-        
-        _globalFilterService.SetAllAvailableVariants(defaultVariants);
+        _globalFilterService.SetAllAvailableVariants(allVariants);
     }
 }

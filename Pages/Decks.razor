@@ -34,73 +34,6 @@
     }
     else
     {
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Filters</h5>
-            </div>
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-md-12">
-                        <label for="minGamesFilter" class="form-label fw-bold">
-                            Minimum Games Played: @minGamesFilter
-                        </label>
-                        <input type="range"
-                               class="form-range"
-                               id="minGamesFilter"
-                               value="@minGamesFilter"
-                               @oninput="@((ChangeEventArgs e) => { minGamesFilter = int.Parse(e.Value?.ToString() ?? DEFAULT_MIN_GAMES_FILTER.ToString()); OnMinGamesFilterChanged(); })"
-                               min="1"
-                               max="50"
-                               step="1" />
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-md-12">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="includeNotOwned" @bind="includeNotOwnedDecks" />
-                            <label class="form-check-label" for="includeNotOwned">
-                                Include not owned decks
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-md-12">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="includeArchived" @bind="includeArchivedDecks" />
-                            <label class="form-check-label" for="includeArchived">
-                                Include archived decks
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                <div class="row mt-2">
-                    <div class="col-md-12">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="hideLabels" @bind="hideLabels" />
-                            <label class="form-check-label" for="hideLabels">
-                                Hide labels
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-md-2">
-                        <button class="btn btn-secondary w-100"
-                                @onclick="ClearMinGamesFilter"
-                                disabled="@(minGamesFilter == DEFAULT_MIN_GAMES_FILTER && !includeNotOwnedDecks && !includeArchivedDecks)">
-                            <i class="bi bi-arrow-clockwise me-1"></i> Reset
-                        </button>
-                    </div>
-                    <div class="col-md-10 d-flex align-items-center">
-                        <span class="text-muted">
-                            Showing @FilteredDeckStats.Count out of @deckStats.Count decks (@(deckStats.Count - FilteredDeckStats.Count) hidden)
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div class="card">
             <div class="card-body">
                 <div class="table-responsive">
@@ -220,13 +153,7 @@
 
                                 <tr>
                                     <td>
-                                        <div class="d-flex align-items-center">
-                                            <NavLink class="deck-link" href="@Utilities.GetDeckUrl(deck.DeckName)">@deck.DeckName</NavLink>
-                                            @if (!hideLabels)
-                                            {
-                                                <TagBadges Tags="@Utilities.GetDeckTags(deck.DeckName)" ContainerClass="ms-2" />
-                                            }
-                                        </div>
+                                        <NavLink class="deck-link" href="@Utilities.GetDeckUrl(deck.DeckName)">@deck.DeckName</NavLink>
                                     </td>
                                     <td class="text-center">
                                         @deck.TotalPlays
@@ -362,8 +289,6 @@
 </div>
 
 @code {
-    private const int DEFAULT_MIN_GAMES_FILTER = 15;
-
     private bool isLoading = true;
     private string? errorMessage;
     private List<DeckStats> deckStats = new();
@@ -371,50 +296,7 @@
     private bool isAscending = false;
     private ApexChartOptions<DeckStats> horizontalChartOptions = new();
     private ApexChartOptions<DeckStats> verticalChartOptions = new();
-    private int minGamesFilter = DEFAULT_MIN_GAMES_FILTER;
-    private bool _includeNotOwnedDecks;
-    private bool includeNotOwnedDecks
-    {
-        get => _includeNotOwnedDecks;
-        set
-        {
-            if (_includeNotOwnedDecks != value)
-            {
-                _includeNotOwnedDecks = value;
-                OnMinGamesFilterChanged();
-            }
-        }
-    }
-    private bool _includeArchivedDecks;
-    private bool includeArchivedDecks
-    {
-        get => _includeArchivedDecks;
-        set
-        {
-            if (_includeArchivedDecks != value)
-            {
-                _includeArchivedDecks = value;
-                OnMinGamesFilterChanged();
-            }
-        }
-    }
-    private bool _hideLabels;
-    private bool hideLabels
-    {
-        get => _hideLabels;
-        set
-        {
-            if (_hideLabels != value)
-            {
-                _hideLabels = value;
-                OnMinGamesFilterChanged();
-            }
-        }
-    }
     private ChartOrientation chartOrientation = ChartOrientation.Horizontal;
-    private List<DeckStats> FilteredDeckStats => deckStats.Where(d =>
-        d.TotalPlays >= minGamesFilter &&
-        ShouldIncludeDeck(d.DeckName)).ToList();
     private ApexChartOptions<DeckStats> playedGamesChartOptions = new();
     private List<DeckStats> chartDeckStats = new();
     private List<DeckStats> chartPlayedGamesDeckStats = new();
@@ -503,18 +385,7 @@
 
     private List<DeckStats> GetSortedDeckStats()
     {
-        var query = currentSortColumn switch
-        {
-            SortColumn.DeckName => FilteredDeckStats.AsQueryable(),
-            SortColumn.Plays => FilteredDeckStats.AsQueryable(),
-            SortColumn.Wins => FilteredDeckStats.AsQueryable(),
-            SortColumn.Losses => FilteredDeckStats.AsQueryable(),
-            SortColumn.WinRate => FilteredDeckStats.AsQueryable(),
-            SortColumn.FirstPlayerWinRate => FilteredDeckStats.AsQueryable(),
-            SortColumn.GoingSecondWinRate => FilteredDeckStats.AsQueryable(),
-            SortColumn.LastPlayed => FilteredDeckStats.AsQueryable(),
-            _ => FilteredDeckStats.AsQueryable()
-        };
+        var query = deckStats.AsQueryable();
 
         var sortedDeckStats = currentSortColumn switch
         {
@@ -710,32 +581,6 @@
         else return "#842029";
     }
 
-    private void OnMinGamesFilterChanged()
-    {
-        UpdateChartData();
-        StateHasChanged();
-    }
-
-    private void ClearMinGamesFilter()
-    {
-        minGamesFilter = DEFAULT_MIN_GAMES_FILTER;
-        includeNotOwnedDecks = false;
-        includeArchivedDecks = false;
-        hideLabels = false;
-        UpdateChartData();
-        StateHasChanged();
-    }
-
-    private bool ShouldIncludeDeck(string deckName)
-    {
-        var tags = Utilities.GetDeckTags(deckName);
-
-        if (tags.Contains("Not Owned") && !includeNotOwnedDecks) return false;
-        if (tags.Contains("Archived") && !includeArchivedDecks) return false;
-
-        return true;
-    }
-
     private void SetChartOrientation(ChartOrientation orientation)
     {
         chartOrientation = orientation;
@@ -766,7 +611,7 @@
 
     private List<DeckStats> GetSortedByPlayedGamesDeckStats()
     {
-        return FilteredDeckStats.OrderByDescending(d => d.Wins + d.Losses).ToList();
+        return deckStats.OrderByDescending(d => d.Wins + d.Losses).ToList();
     }
 
     private void UpdateChartData()

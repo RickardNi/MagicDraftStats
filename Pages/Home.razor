@@ -85,8 +85,8 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <p><strong>Total Plays:</strong> @plays.Count</p>
-                        <p><strong>Total Decks Used:</strong> @(plays.Any() ? plays.SelectMany(p => p.PlayerScores).Select(ps => ps.Deck).Distinct().Count() : 0)</p>
+                        <p><strong>Total Drafts:</strong> @plays.Count</p>
+                        <p><strong>Unique Decks Drafted:</strong> @(plays.Any() ? plays.SelectMany(p => p.PlayerScores).Select(ps => ps.Deck).Distinct().Count() : 0)</p>
                         <p><strong>Total Players:</strong> @(plays.Any() ? plays.SelectMany(p => p.PlayerScores).Select(ps => ps.PlayerName).Distinct().Count() : 0)</p>
                         <hr />
                         @if (plays.Any())
@@ -101,7 +101,7 @@
                             <p><strong>Longest Game:</strong> @longestGame.DurationInMinutes minutes</p>
                             <p><strong>Total Play Time:</strong> @Utilities.FormatTotalPlayTime(plays.Sum(p => p.DurationInMinutes))</p>
                             <hr />
-                            <p><strong>Most Played Deck:</strong> <NavLink class="deck-link" href="@Utilities.GetDeckUrl(mostPlayedDeck.Key)">@mostPlayedDeck.Key</NavLink> (@mostPlayedDeck.Count() plays)</p>
+                            <p><strong>Most Common Deck:</strong> <NavLink class="deck-link" href="@Utilities.GetDeckUrl(mostPlayedDeck.Key)">@mostPlayedDeck.Key</NavLink> (@mostPlayedDeck.Count() plays)</p>
                         }
                         else
                         {

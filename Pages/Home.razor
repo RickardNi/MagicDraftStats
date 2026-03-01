@@ -86,7 +86,6 @@
                     </div>
                     <div class="card-body">
                         <p><strong>Total Drafts:</strong> @plays.Count</p>
-                        <p><strong>Unique Decks Drafted:</strong> @(plays.Any() ? plays.SelectMany(p => p.PlayerScores).Select(ps => ps.Deck).Distinct().Count() : 0)</p>
                         <p><strong>Total Players:</strong> @(plays.Any() ? plays.SelectMany(p => p.PlayerScores).Select(ps => ps.PlayerName).Distinct().Count() : 0)</p>
                         <hr />
                         @if (plays.Any())
@@ -144,7 +143,6 @@
                                     <th>Rank</th>
                                     <th>Player</th>
                                     <th>Plays</th>
-                                    <th>Decks Played</th>
                                     <th>Wins</th>
                                     <th>Win Rate</th>
                                     <th>Most Played Deck</th>
@@ -162,7 +160,6 @@
                                             GamesPlayed = g.Count(),
                                             Wins = g.Count(ps => ps.IsWinner),
                                             WinRate = g.Count(ps => ps.IsWinner) / (double)g.Count(),
-                                            UniqueDecks = g.Select(ps => ps.Deck).Distinct().Count(),
                                             FavouriteDeck = g.GroupBy(ps => ps.Deck)
                                                              .OrderByDescending(dg => dg.Count())
                                                              .First().Key,
@@ -202,7 +199,6 @@
                                                 </NavLink>
                                             </td>
                                             <td>@player.GamesPlayed</td>
-                                            <td>@player.UniqueDecks</td>
                                             <td>@player.Wins</td>
                                             <td>
                                                 <span class="fw-bold @Utilities.GetWinRateColorForPlayer(player.WinRate)">@Utilities.FormatWinRate(player.WinRate)</span>

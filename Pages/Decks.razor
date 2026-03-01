@@ -63,7 +63,16 @@
                                             <span class="text-muted">-</span>
                                         }
                                     </td>
-                                    <td>@deck.PlayerName</td>
+                                    <td>
+                                        @if (deck.PlayerId > 0)
+                                        {
+                                            <NavLink class="deck-link" href="@Utilities.GetPlayerUrl(deck.PlayerId)" @onclick:stopPropagation="true">@deck.PlayerName</NavLink>
+                                        }
+                                        else
+                                        {
+                                            @deck.PlayerName
+                                        }
+                                    </td>
                                     <td class="text-center">
                                         <span class="fw-bold @(deck.Rank == 1 ? "text-success-dark" : "text-warning")">@(deck.Rank?.ToString() ?? "-")</span>
                                     </td>
@@ -150,6 +159,7 @@
                 {
                     EncodedDeckId = Uri.EscapeDataString(item.FilePath),
                     Date = item.Deck!.Date,
+                    PlayerId = item.Deck.PlayerRefId,
                     PlayerName = playerLookup.TryGetValue(item.Deck.PlayerRefId, out var playerName) ? playerName : $"Player #{item.Deck.PlayerRefId}",
                     Rank = item.Deck.Rank
                 })
@@ -189,6 +199,7 @@
     {
         public string EncodedDeckId { get; set; } = string.Empty;
         public DateOnly? Date { get; set; }
+        public int PlayerId { get; set; }
         public string PlayerName { get; set; } = string.Empty;
         public int? Rank { get; set; }
     }

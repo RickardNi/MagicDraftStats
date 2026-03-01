@@ -1,0 +1,297 @@
+@page "/deck/{deckId}"
+@using MagicDraftStats.Models
+@using MagicDraftStats.Services
+@inject IDeckImportService DeckImportService
+@inject IBGStatsImportService BGStatsService
+
+<PageTitle>Magic Draft Stats - Deck Details</PageTitle>
+
+<div class="container mt-4">
+    <div>
+        <h1><i class="bi bi-file-bar-graph-fill me-4"></i>Deck: <span class="fw-bold">@displayDeckName</span></h1>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-arrow-clockwise spin me-2"></i>Loading deck details...
+        </div>
+    }
+    else if (errorMessage != null)
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i> @errorMessage
+        </div>
+    }
+    else if (deckFile == null)
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> Deck not found.
+        </div>
+    }
+    else
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-graph-up"></i>Stats
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-5">Plays</dt>
+                            <dd class="col-sm-7">0</dd>
+                            <dt class="col-sm-5">Wins</dt>
+                            <dd class="col-sm-7 text-success fw-bold">0</dd>
+                            <dt class="col-sm-5">Losses</dt>
+                            <dd class="col-sm-7 text-danger">0</dd>
+                        </dl>
+                        <hr class="my-3" />
+                        <dl class="row mb-0">
+                            <dt class="col-sm-5">Played by</dt>
+                            <dd class="col-sm-7">@playerName</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6 mb-4 mb-md-0">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="bi bi-1-square"></i>First Player Win Rate</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (deckPlays.Any())
+                        {
+                            <ApexChart TItem="FirstPlayerStats" Options="@firstPlayerChartOptions">
+                                <ApexPointSeries TItem="FirstPlayerStats"
+                                                 Items="@firstPlayerStats"
+                                                 Name="Plays"
+                                                 SeriesType="SeriesType.Pie"
+                                                 XValue="@(e => e.Result)"
+                                                 YValue="@(e => e.Count)"
+                                                 PointColor="e => GetPointColor(e)"
+                                                 ShowDataLabels />
+                            </ApexChart>
+                            <div class="row text-center mt-3">
+                                <div class="col-6">
+                                    <div class="text-success">
+                                        <div class="fw-bold">@winsAsFirstPlayer</div>
+                                        <div class="small">Wins</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-danger">
+                                        <div class="fw-bold">@lossesAsFirstPlayer</div>
+                                        <div class="small">Losses</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted">No plays found</p>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0"><i class="bi bi-2-square"></i>Going Second</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (deckPlays.Any())
+                        {
+                            <ApexChart TItem="FirstPlayerStats" Options="@goingSecondChartOptions">
+                                <ApexPointSeries TItem="FirstPlayerStats"
+                                                 Items="@goingSecondStats"
+                                                 Name="Plays"
+                                                 SeriesType="SeriesType.Pie"
+                                                 XValue="@(e => e.Result)"
+                                                 YValue="@(e => e.Count)"
+                                                 PointColor="e => GetPointColor(e)"
+                                                 ShowDataLabels />
+                            </ApexChart>
+                            <div class="row text-center mt-3">
+                                <div class="col-6">
+                                    <div class="text-success">
+                                        <div class="fw-bold">@winsAsNonFirstPlayer</div>
+                                        <div class="small">Wins</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-danger">
+                                        <div class="fw-bold">@lossesAsNonFirstPlayer</div>
+                                        <div class="small">Losses</div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted">No plays found</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
+
+@code
+{
+    [Parameter]
+    public string deckId { get; set; } = string.Empty;
+
+    private bool isLoading = true;
+    private string? errorMessage;
+    private DeckFile? deckFile;
+    private string displayDeckName = "-";
+    private string playerName = "-";
+
+    private List<Play> deckPlays = new();
+    private ApexChartOptions<FirstPlayerStats> firstPlayerChartOptions = new();
+    private List<FirstPlayerStats> firstPlayerStats = new();
+    private int lossesAsFirstPlayer = 0;
+    private int lossesAsNonFirstPlayer = 0;
+    private ApexChartOptions<FirstPlayerStats> goingSecondChartOptions = new();
+    private List<FirstPlayerStats> goingSecondStats = new();
+    private int winsAsFirstPlayer = 0;
+    private int winsAsNonFirstPlayer = 0;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadDeckData();
+    }
+
+    private async Task LoadDeckData()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+            deckFile = null;
+            displayDeckName = "-";
+            playerName = "-";
+            deckPlays.Clear();
+
+            var decodedDeckId = Uri.UnescapeDataString(deckId ?? string.Empty);
+            var importResult = await DeckImportService.LoadAndValidateDecksAsync();
+            var deckItem = importResult.Items.FirstOrDefault(item => item.FilePath.Equals(decodedDeckId, StringComparison.OrdinalIgnoreCase));
+
+            if (deckItem?.Deck == null)
+            {
+                return;
+            }
+
+            deckFile = deckItem.Deck;
+            displayDeckName = Path.GetFileNameWithoutExtension(deckItem.FilePath);
+
+            var bgStatsData = await BGStatsService.GetCurrentDataAsync();
+            playerName = bgStatsData?.Players?.FirstOrDefault(player => player.Id == deckFile.PlayerRefId)?.Name ?? $"Player #{deckFile.PlayerRefId}";
+
+            firstPlayerStats = new List<FirstPlayerStats>
+            {
+                new FirstPlayerStats { Result = "Losses", Count = lossesAsFirstPlayer },
+                new FirstPlayerStats { Result = "Wins", Count = winsAsFirstPlayer }
+            };
+
+            goingSecondStats = new List<FirstPlayerStats>
+            {
+                new FirstPlayerStats { Result = "Losses", Count = lossesAsNonFirstPlayer },
+                new FirstPlayerStats { Result = "Wins", Count = winsAsNonFirstPlayer }
+            };
+
+            firstPlayerChartOptions = new ApexChartOptions<FirstPlayerStats>
+            {
+                Chart = new Chart
+                {
+                    Type = ChartType.Pie,
+                    Height = 300,
+                    FontFamily = "Roboto Condensed"
+                },
+                Legend = new Legend
+                {
+                    Show = false
+                },
+                DataLabels = new DataLabels
+                {
+                    Style = new DataLabelsStyle
+                    {
+                        FontSize = "14px",
+                        FontWeight = "bold"
+                    }
+                },
+                Responsive = new List<Responsive<FirstPlayerStats>>
+                {
+                    new Responsive<FirstPlayerStats>
+                    {
+                        Breakpoint = 480,
+                        Options = new ApexChartOptions<FirstPlayerStats>
+                        {
+                            Chart = new Chart { Width = 200, FontFamily = "Roboto Condensed" }
+                        }
+                    }
+                }
+            };
+
+            goingSecondChartOptions = new ApexChartOptions<FirstPlayerStats>
+            {
+                Chart = new Chart
+                {
+                    Type = ChartType.Pie,
+                    Height = 300,
+                    FontFamily = "Roboto Condensed"
+                },
+                Legend = new Legend
+                {
+                    Show = false
+                },
+                DataLabels = new DataLabels
+                {
+                    Style = new DataLabelsStyle
+                    {
+                        FontSize = "14px",
+                        FontWeight = "bold"
+                    }
+                },
+                Responsive = new List<Responsive<FirstPlayerStats>>
+                {
+                    new Responsive<FirstPlayerStats>
+                    {
+                        Breakpoint = 480,
+                        Options = new ApexChartOptions<FirstPlayerStats>
+                        {
+                            Chart = new Chart { Width = 200, FontFamily = "Roboto Condensed" }
+                        }
+                    }
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading deck details: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string GetPointColor(FirstPlayerStats stats)
+    {
+        return stats.Result == "Wins" ? "#28a745" : "#dc3545";
+    }
+
+    public class FirstPlayerStats
+    {
+        public string Result { get; set; } = string.Empty;
+        public int Count { get; set; }
+    }
+}

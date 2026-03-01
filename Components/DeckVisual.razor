@@ -145,19 +145,21 @@ else
             var lands = visuals.Where(card => card.IsLand).ToList();
 
             var groupedNonLands = nonLands
-                .GroupBy(card => card.ManaValue.HasValue ? Math.Max(0, (int)card.ManaValue.Value).ToString() : "?")
-                .OrderBy(group => group.Key == "?" ? int.MaxValue : int.Parse(group.Key))
+                .GroupBy(card => GetManaBucket(card.ManaValue))
+                .OrderBy(group => group.Key)
                 .Select(group => new ManaPile
                 {
-                    Label = group.Key,
+                    Label = group.Key == int.MaxValue ? "?" : (group.Key == 6 ? "6+" : group.Key.ToString()),
                     IsLands = false,
                     PrimaryCards = group
                         .Where(card => card.IsCreature || card.IsPlaneswalker)
-                        .OrderBy(card => card.Name)
+                        .OrderBy(card => GetManaSortValue(card.ManaValue))
+                        .ThenBy(card => card.Name)
                         .ToList(),
                     SecondaryCards = group
                         .Where(card => !card.IsCreature && !card.IsPlaneswalker)
-                        .OrderBy(card => card.Name)
+                        .OrderBy(card => GetManaSortValue(card.ManaValue))
+                        .ThenBy(card => card.Name)
                         .ToList()
                 })
                 .ToList();
@@ -193,6 +195,22 @@ else
         {
             isLoading = false;
         }
+    }
+
+    private static int GetManaBucket(decimal? manaValue)
+    {
+        if (!manaValue.HasValue)
+        {
+            return int.MaxValue;
+        }
+
+        var mana = Math.Max(0, (int)manaValue.Value);
+        return mana >= 6 ? 6 : mana;
+    }
+
+    private static decimal GetManaSortValue(decimal? manaValue)
+    {
+        return manaValue ?? decimal.MaxValue;
     }
 
     private string GetPrimarySlotStyle()

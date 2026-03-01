@@ -1,6 +1,6 @@
 # MagicDraftStats
 
-An application for analyzing _Magic: The Gathering_ draft statistics and gameplay data, importing data from [BGStats](https://www.bgstatsapp.com/). This is a Blazor WebAssembly (WASM) application built with .NET 9.
+An application for analyzing _Magic: The Gathering_ draft statistics and gameplay data, importing data from [BGStats](https://www.bgstatsapp.com/). This is a Blazor WebAssembly (WASM) application built with .NET 10.
 
 I mainly use it to track performance of our drafts, which is mainly the [Magic Foundations cube](https://cubecobra.com/cube/list/5b73c9bb-4928-4d6a-9580-30d5a718d925).
 

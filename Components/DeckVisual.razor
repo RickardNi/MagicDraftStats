@@ -1,0 +1,138 @@
+@using MagicDraftStats.Models
+@using MagicDraftStats.Services
+@inject IScryfallCardService ScryfallCardService
+
+@if (Cards == null || !Cards.Any())
+{
+    <div class="alert alert-info mb-0">No card data found for this deck.</div>
+}
+else if (isLoading)
+{
+    <div class="alert alert-info mb-0">
+        <i class="bi bi-arrow-clockwise spin me-2"></i>Loading card images...
+    </div>
+}
+else if (errorMessage != null)
+{
+    <div class="alert alert-warning mb-0">
+        <i class="bi bi-exclamation-triangle me-2"></i>@errorMessage
+    </div>
+}
+else
+{
+    <div class="d-flex align-items-start gap-3 flex-nowrap overflow-auto pb-2">
+        @foreach (var pile in manaPiles)
+        {
+            <div class="d-flex flex-column" style="min-width: 170px; max-width: 170px;">
+                <h6 class="fw-bold mb-2 text-center">
+                    @if (pile.IsLands)
+                    {
+                        <span>Lands</span>
+                    }
+                    else
+                    {
+                        <span>@pile.Label</span>
+                    }
+                </h6>
+                <div class="d-flex flex-column gap-2">
+                    @foreach (var card in pile.Cards)
+                    {
+                        @for (var i = 0; i < card.Count; i++)
+                        {
+                            @if (!string.IsNullOrWhiteSpace(card.ScryfallUrl))
+                            {
+                                <a href="@card.ScryfallUrl" target="_blank" rel="noopener" class="text-decoration-none">
+                                    <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="lazy" />
+                                </a>
+                            }
+                            else
+                            {
+                                <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="lazy" />
+                            }
+                        }
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public List<CardEntry> Cards { get; set; } = new();
+
+    private bool isLoading = true;
+    private string? errorMessage;
+    private List<ManaPile> manaPiles = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadVisuals();
+    }
+
+    private async Task LoadVisuals()
+    {
+        if (Cards == null || !Cards.Any())
+        {
+            manaPiles = new();
+            isLoading = false;
+            errorMessage = null;
+            return;
+        }
+
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+            var visuals = await ScryfallCardService.GetDeckCardVisualsAsync(Cards, "fdn");
+            var nonLands = visuals.Where(card => !card.IsLand).ToList();
+            var lands = visuals.Where(card => card.IsLand).ToList();
+
+            var groupedNonLands = nonLands
+                .GroupBy(card => card.ManaValue.HasValue ? Math.Max(0, (int)card.ManaValue.Value).ToString() : "?")
+                .OrderBy(group => group.Key == "?" ? int.MaxValue : int.Parse(group.Key))
+                .Select(group => new ManaPile
+                {
+                    Label = group.Key,
+                    IsLands = false,
+                    Cards = group
+                        .OrderByDescending(card => card.IsCreature)
+                        .ThenBy(card => card.Name)
+                        .ToList()
+                })
+                .ToList();
+
+            if (lands.Any())
+            {
+                groupedNonLands.Add(new ManaPile
+                {
+                    Label = "Lands",
+                    IsLands = true,
+                    Cards = lands
+                        .OrderByDescending(card => card.IsCreature)
+                        .ThenBy(card => card.Name)
+                        .ToList()
+                });
+            }
+
+            manaPiles = groupedNonLands;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Could not load card visuals: {ex.Message}";
+            manaPiles = new();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private class ManaPile
+    {
+        public string Label { get; set; } = string.Empty;
+        public bool IsLands { get; set; }
+        public List<DeckCardVisual> Cards { get; set; } = new();
+    }
+}

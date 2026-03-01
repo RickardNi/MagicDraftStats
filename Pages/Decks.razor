@@ -78,12 +78,52 @@
             </div>
         </div>
     }
+
+    @if (!isLoading && validationIssues.Any())
+    {
+        <div class="card mt-4 border-warning">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Deck Validation Problems
+                    <span class="text-muted ms-2">(@validationIssues.Count)</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Severity</th>
+                                <th>File</th>
+                                <th>Code</th>
+                                <th>Message</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var issue in validationIssues)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="badge @(issue.Severity == DeckValidationSeverity.Error ? "bg-danger" : "bg-warning text-dark")">@issue.Severity</span>
+                                    </td>
+                                    <td style="white-space: nowrap;">@issue.FilePath</td>
+                                    <td><code>@issue.Code</code></td>
+                                    <td>@issue.Message</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
     private bool isLoading = true;
     private string? errorMessage;
     private List<DeckRow> deckRows = new();
+    private List<ValidationIssue> validationIssues = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -96,6 +136,7 @@
         {
             isLoading = true;
             errorMessage = null;
+            validationIssues = new();
 
             var importResult = await DeckImportService.LoadAndValidateDecksAsync();
             var bgStatsData = await BGStatsService.GetCurrentDataAsync();
@@ -114,6 +155,19 @@
                 })
                 .OrderByDescending(deck => deck.Date)
                 .ThenBy(deck => deck.PlayerName)
+                .ToList();
+
+            validationIssues = importResult.Items
+                .SelectMany(item => item.ValidationMessages.Select(message => new ValidationIssue
+                {
+                    FilePath = item.FilePath,
+                    Severity = message.Severity,
+                    Code = message.Code,
+                    Message = message.Message
+                }))
+                .OrderByDescending(issue => issue.Severity == DeckValidationSeverity.Error)
+                .ThenBy(issue => issue.FilePath)
+                .ThenBy(issue => issue.Code)
                 .ToList();
         }
         catch (Exception ex)
@@ -137,5 +191,13 @@
         public DateOnly? Date { get; set; }
         public string PlayerName { get; set; } = string.Empty;
         public int? Rank { get; set; }
+    }
+
+    private class ValidationIssue
+    {
+        public string FilePath { get; set; } = string.Empty;
+        public DeckValidationSeverity Severity { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
     }
 }

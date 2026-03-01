@@ -8,7 +8,7 @@
 
 <div class="container mt-4">
     <div>
-        <h1><i class="bi bi-file-bar-graph-fill me-4"></i>Deck: <span class="fw-bold">@displayDeckName</span></h1>
+        <h1><i class="bi bi-file-bar-graph-fill me-4"></i><span class="fw-bold">@displayDeckName</span></h1>
     </div>
 
     @if (isLoading)
@@ -31,15 +31,8 @@
     }
     else
     {
-        <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-grid-3x3-gap"></i>Deck Visual
-                </h5>
-            </div>
-            <div class="card-body">
-                <DeckVisual Cards="@deckFile.Cards" />
-            </div>
+        <div class="mb-4">
+            <DeckVisual Cards="@deckFile.Cards" />
         </div>
 
         <div class="row mb-4">
@@ -204,9 +197,17 @@
             playerId = 0;
             deckPlays.Clear();
 
-            var decodedDeckId = Uri.UnescapeDataString(deckId ?? string.Empty);
+            var decodedDeckId = Uri.UnescapeDataString(deckId ?? string.Empty).Trim();
+            var normalizedDeckId = Path.GetFileNameWithoutExtension(decodedDeckId);
+            if (string.IsNullOrWhiteSpace(normalizedDeckId))
+            {
+                normalizedDeckId = decodedDeckId;
+            }
+
             var importResult = await DeckImportService.LoadAndValidateDecksAsync();
-            var deckItem = importResult.Items.FirstOrDefault(item => item.FilePath.Equals(decodedDeckId, StringComparison.OrdinalIgnoreCase));
+            var deckItem = importResult.Items.FirstOrDefault(item =>
+                string.Equals(Path.GetFileNameWithoutExtension(item.FilePath), normalizedDeckId, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(item.FilePath, decodedDeckId, StringComparison.OrdinalIgnoreCase));
 
             if (deckItem?.Deck == null)
             {
@@ -214,11 +215,12 @@
             }
 
             deckFile = deckItem.Deck;
-            displayDeckName = Path.GetFileNameWithoutExtension(deckItem.FilePath);
             playerId = deckFile.PlayerRefId;
 
             var bgStatsData = await BGStatsService.GetCurrentDataAsync();
             playerName = bgStatsData?.Players?.FirstOrDefault(player => player.Id == deckFile.PlayerRefId)?.Name ?? $"Player #{deckFile.PlayerRefId}";
+            var dateText = deckFile.Date?.ToString("yyyy-MM-dd") ?? Path.GetFileNameWithoutExtension(deckItem.FilePath);
+            displayDeckName = $"{dateText} - {playerName}";
 
             firstPlayerStats = new List<FirstPlayerStats>
             {

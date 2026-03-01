@@ -52,7 +52,7 @@
                         <tbody>
                             @foreach (var deck in deckRows)
                             {
-                                <tr style="cursor: pointer;" @onclick="() => OpenDeck(deck.EncodedDeckId)">
+                                <tr style="cursor: pointer;" @onclick="() => OpenDeck(deck.DeckId)">
                                     <td>
                                         @if (deck.Date.HasValue)
                                         {
@@ -157,7 +157,7 @@
                 .Where(item => item.Deck != null)
                 .Select(item => new DeckRow
                 {
-                    EncodedDeckId = Uri.EscapeDataString(item.FilePath),
+                    DeckId = Path.GetFileNameWithoutExtension(item.FilePath),
                     Date = item.Deck!.Date,
                     PlayerId = item.Deck.PlayerRefId,
                     PlayerName = playerLookup.TryGetValue(item.Deck.PlayerRefId, out var playerName) ? playerName : $"Player #{item.Deck.PlayerRefId}",
@@ -190,14 +190,14 @@
         }
     }
 
-    private void OpenDeck(string encodedDeckId)
+    private void OpenDeck(string deckId)
     {
-        NavigationManager.NavigateTo($"deck/{encodedDeckId}");
+        NavigationManager.NavigateTo($"deck/{Uri.EscapeDataString(deckId)}");
     }
 
     private class DeckRow
     {
-        public string EncodedDeckId { get; set; } = string.Empty;
+        public string DeckId { get; set; } = string.Empty;
         public DateOnly? Date { get; set; }
         public int PlayerId { get; set; }
         public string PlayerName { get; set; } = string.Empty;

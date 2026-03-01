@@ -15,15 +15,41 @@
         <div class="card-body">
             <div class="d-flex justify-content-center align-items-center gap-4 flex-wrap mb-3">
                 <a href="https://scryfall.com/card/fdn/27/valkyries-call" target="_blank" rel="noopener">
-                    <img src="https://api.scryfall.com/cards/named?exact=Valkyries%20Call&set=fdn&format=image" alt="Valkyrie's Call" class="img-fluid rounded shadow" style="max-width: 320px;" />
+                    <img src="https://api.scryfall.com/cards/named?exact=Valkyries%20Call&set=fdn&format=image" alt="Valkyrie's Call" class="img-fluid rounded-3 shadow" style="max-width: 320px;" />
+                </a>
+                <a href="https://scryfall.com/card/fdn/185/llanowar-elves" target="_blank" rel="noopener">
+                    <img src="https://api.scryfall.com/cards/named?exact=Llanowar%20Elves&set=fdn&format=image" alt="Llanowar Elves" class="img-fluid rounded-3 shadow" style="max-width: 320px;" />
                 </a>
                 <a href="https://scryfall.com/card/fdn/168/witness-protection" target="_blank" rel="noopener">
-                    <img src="https://api.scryfall.com/cards/named?exact=Witness%20Protection&set=fdn&format=image" alt="Witness Protection" class="img-fluid rounded shadow" style="max-width: 320px;" />
+                    <img src="https://api.scryfall.com/cards/named?exact=Witness%20Protection&set=fdn&format=image" alt="Witness Protection" class="img-fluid rounded-3 shadow" style="max-width: 320px;" />
                 </a>
             </div>
             <p class="mt-4">
                 <span class="fs-5">
-                    I have <strong>Valkyrie's Call</strong> in play, as well as <strong>Llanowar Elves</strong>, which dies and then comes back as an Angel with a +1/+1 counter on it. My opponent plays <strong>Witness Protection</strong> on it. It is now a base 1/1 Citizen with a +1/+1 counter on it (so a 2/2), but it's no longer an Angel and does not have flying. Thus, it will return as an Angel when it dies, with a +1/+1 counter on it again.
+                    I have <strong>Valkyrie's Call</strong> in play, as well as a <strong>Llanowar Elves</strong> that has already died and come back as an Angel with a +1/+1 counter on it. My opponent then plays <strong>Witness Protection</strong> on it. It is now a base 1/1 Citizen with a +1/+1 counter on it (making it a 2/2), but it is no longer an Angel and does not have flying. If it dies again, Valkyrie's Call will trigger and return it as a new Angel with a +1/+1 counter on it once more.
+                </span>
+            </p>
+        </div>
+    </div>
+    
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                Valkyrie's Call and Nine-Lives Familiar
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-center align-items-center gap-4 flex-wrap mb-3">
+                <a href="https://scryfall.com/card/fdn/27/valkyries-call" target="_blank" rel="noopener">
+                    <img src="https://api.scryfall.com/cards/named?exact=Valkyries%20Call&set=fdn&format=image" alt="Valkyrie's Call" class="img-fluid rounded-3 shadow" style="max-width: 320px;" />
+                </a>
+                <a href="https://scryfall.com/card/fdn/66/nine-lives-familiar" target="_blank" rel="noopener">
+                    <img src="https://api.scryfall.com/cards/named?exact=Nine-Lives%20Familiar&set=fdn&format=image" alt="Nine-Lives Familiar" class="img-fluid rounded-3 shadow" style="max-width: 320px;" />
+                </a>
+            </div>
+            <p class="mt-4">
+                <span class="fs-5">
+                    If <strong>Nine-Lives Familiar</strong> dies while <strong>Valkyrie's Call</strong> is in play, it returns as a flying Angel with no revival counters (since it wasn't <em>cast</em>). This trigger is not optional, and the delayed trigger from <strong>Nine-Lives Familiar</strong> itself will do nothing at the next end step.
                 </span>
             </p>
         </div>
@@ -31,115 +57,50 @@
     <div class="card mt-4">
         <div class="card-header">
             <h5 class="card-title mb-0">
-                Double use of decayed creatures
+                Giada, Font of Hope and Taurean Mauler
             </h5>
         </div>
         <div class="card-body">
             <div class="d-flex justify-content-center align-items-center gap-4 flex-wrap mb-3">
-                <a href="https://scryfall.com/card/mid/52/falcon-abomination" target="_blank" rel="noopener">
-                    <img src="https://api.scryfall.com/cards/named?exact=Falcon%20Abomination&set=mid&format=image" alt="Falcon Abomination" class="img-fluid rounded shadow" style="max-width: 320px;" />
+                <a href="https://scryfall.com/card/fdn/14/giada-font-of-hope" target="_blank" rel="noopener">
+                    <img src="https://api.scryfall.com/cards/named?exact=Giada%2C%20Font%20of%20Hope&set=fdn&format=image" alt="Giada, Font of Hope" class="img-fluid rounded-3 shadow" style="max-width: 320px;" />
                 </a>
-                <a href="https://scryfall.com/card/mid/214/corpse-cobble" target="_blank" rel="noopener">
-                    <img src="https://api.scryfall.com/cards/named?exact=Corpse%20Cobble&set=mid&format=image" alt="Corpse Cobble" class="img-fluid rounded shadow" style="max-width: 320px;" />
+                <a href="https://scryfall.com/card/fdn/155/taurean-mauler" target="_blank" rel="noopener">
+                    <img src="https://api.scryfall.com/cards/named?exact=Taurean%20Mauler&set=fdn&format=image" alt="Taurean Mauler" class="img-fluid rounded-3 shadow" style="max-width: 320px;" />
                 </a>
             </div>
-            <p class="mt-4 fs-5">
-                You can attack with creatures with <em>decayed</em> and have them deal damage. When the end of combat step begins, the sacrifice triggers are put on the stack, and then, when you receive priority, you can cast <strong>Corpse Cobble</strong> (before the sacrifice triggers are resolved) and sacrifice them all as a cost for casting the spell.
+            <p class="mt-4">
+                <span class="fs-5">
+                    <strong>Taurean Mauler</strong> is a Changeling, which means it has every creature type — including Angel. If <strong>Giada, Font of Hope</strong> is in play, Taurean Mauler will enter the battlefield with an additional +1/+1 counter on it. Changeling is a "characteristic-defining ability", which is active in all zones.
+                </span>
             </p>
         </div>
     </div>
     <div class="card mt-4">
         <div class="card-header">
             <h5 class="card-title mb-0">
-                Multiple Upkeep triggers
+                Think Twice and Scavenging Ooze
             </h5>
         </div>
         <div class="card-body">
             <div class="d-flex justify-content-center align-items-center gap-4 flex-wrap mb-3">
-                <a href="https://scryfall.com/card/m19/67/patient-rebuilding" target="_blank" rel="noopener">
-                    <img src="https://api.scryfall.com/cards/named?exact=Patient%20Rebuilding&set=m19&format=image" alt="Patient Rebuilding" class="img-fluid rounded shadow" style="max-width: 320px;" />
+                <a href="https://scryfall.com/card/fdn/74/think-twice" target="_blank" rel="noopener">
+                    <img src="https://api.scryfall.com/cards/named?exact=Think%20Twice&set=fdn&format=image" alt="Think Twice" class="img-fluid rounded-3 shadow" style="max-width: 320px;" />
                 </a>
-                <a href="https://scryfall.com/card/war/83/davriel-rogue-shadowmage" target="_blank" rel="noopener">
-                    <img src="https://api.scryfall.com/cards/named?exact=Davriel%2C%20Rogue%20Shadowmage&set=war&format=image" alt="Davriel, Rogue Shadowmage" class="img-fluid rounded shadow" style="max-width: 320px;" />
-                </a>
-            </div>
-            <p class="mt-4 fs-5">
-                The active player can choose the order of its own triggers, but all the AP's triggers will go on the stack first, and then the NAP's. So if you have <strong>Patient Rebuilding</strong> and your opponent has <strong>Davriel, Rogue Shadowmage</strong>, your trigger will be put on the stack first, meaning it will check for one or fewer cards in hand first, then your opponent will mill three cards.
-            </p>
-        </div>
-    </div>
-    <div class="card mt-4">
-        <div class="card-header">
-            <h5 class="card-title mb-0">
-                Blinking Sagas
-            </h5>
-        </div>
-        <div class="card-body">
-            <div class="d-flex justify-content-center align-items-center gap-4 flex-wrap mb-3">
-                <a href="https://scryfall.com/card/znc/74/the-mending-of-dominaria" target="_blank" rel="noopener">
-                    <img src="https://api.scryfall.com/cards/named?exact=The%20Mending%20of%20Dominaria&set=znc&format=image" alt="The Mending of Dominaria" class="img-fluid rounded shadow" style="max-width: 320px;" />
-                </a>
-                <a href="https://scryfall.com/card/thb/16/flicker-of-fate" target="_blank" rel="noopener">
-                    <img src="https://api.scryfall.com/cards/named?exact=Flicker%20of%20Fate&set=thb&format=image" alt="Flicker of Fate" class="img-fluid rounded shadow" style="max-width: 320px;" />
+                <a href="https://scryfall.com/card/fdn/189/scavenging-ooze" target="_blank" rel="noopener">
+                    <img src="https://api.scryfall.com/cards/named?exact=Scavenging%20Ooze&set=fdn&format=image" alt="Scavenging Ooze" class="img-fluid rounded-3 shadow" style="max-width: 320px;" />
                 </a>
             </div>
-            <p class="mt-4 fs-5">
-                When the third lore counter is added to the Saga, the chapter trigger will first resolve and then the Saga's controller sacrifices it as soon as its chapter ability has left the stack. This state-based action doesn't use the stack.
+            <p class="mt-4">
+                <span class="fs-5">
+                    If <strong>Think Twice</strong> is in an opponent's graveyard, you can activate <strong>Scavenging Ooze</strong>'s ability targeting it. In response, your opponent can Flashback <strong>Think Twice</strong>. When <strong>Scavenging Ooze</strong>'s ability tries to resolve, <strong>Think Twice</strong> is no longer in the graveyard (it was exiled as part of Flashback), so the ability does nothing — no card is exiled, no +1/+1 counter is placed, and no life is gained.
+                </span>
             </p>
-            <p class="mt-4 fs-5">
-                In normal cases, this will result in <strong>The Mending of Dominaria</strong> being the only card in the graveyard afterwards.
+            <p class="mt-4">
+                <span class="fs-5">
+                    If the opponent casts <strong>Think Twice</strong> using Flashback from their graveyard, it will be put on the stack, and by the time players get priority, it will no longer be in the graveyard, so <strong>Scavenging Ooze</strong>'s ability will not be able to target it at all.
+                </span>
             </p>
-            <p class="mt-4 fs-5">
-                You can use <strong>Flicker of Fate</strong> when the chapter ability is on the stack. This would blink it, and when it comes in again, it will trigger the first chapter ability which will be resolved before the third chapter ability. After the third chapter ability has left the stack, there will be nothing to sacrifice anymore, because the old Saga doesn't exist anymore. The new Saga will remain on the battlefield with 1 lore counter on it.
-            </p>
-            <p class="mt-4 fs-5">
-                You cannot wait until the third chapter ability has been resolved to cast <strong>Flicker of Fate</strong> because the sacrifice will be made before you get priority.
-            </p>
-        </div>
-    </div>
-    <div class="card mt-4">
-        <div class="card-header">
-            <h5 class="card-title mb-0">
-                Dark Impostor
-            </h5>
-        </div>
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col-md-4 text-center text-md-start mb-3 mb-md-0">
-                    <a href="https://scryfall.com/card/voc/127/dark-impostor" target="_blank" rel="noopener">
-                        <img src="https://api.scryfall.com/cards/named?exact=Dark%20Impostor&set=voc&format=image" alt="Dark Impostor" class="img-fluid rounded shadow" style="max-width: 320px;" />
-                    </a>
-                </div>
-                <div class="col-md-8">
-                    <p class="fs-5">
-                        If the target is illegal as it resolves, the whole ability will fizzle, and <strong>Dark Impostor</strong> won't get a +1/+1 counter.
-                    </p>
-                    <p class="fs-5">
-                        Regardless, it will retain its original activated ability.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="card mt-4">
-        <div class="card-header">
-            <h5 class="card-title mb-0">
-                Vizkopa Guildmage - Second ability can be activated multiple times
-            </h5>
-        </div>
-        <div class="card-body">
-            <div class="row align-items-center">
-                <div class="col-md-4 text-center text-md-start mb-3 mb-md-0">
-                    <a href="https://scryfall.com/card/gtc/206/vizkopa-guildmage" target="_blank" rel="noopener">
-                        <img src="https://api.scryfall.com/cards/named?exact=Vizkopa%20Guildmage&set=gtc&format=image" alt="Vizkopa Guildmage" class="img-fluid rounded shadow" style="max-width: 320px;" />
-                    </a>
-                </div>
-                <div class="col-md-8">
-                    <p class="fs-5">
-                        Each time <strong>Vizkopa Guildmage</strong>’s second ability resolves, a delayed triggered ability is created. Whenever you gain life that turn, each of those abilities will trigger. For example, if you activate the second ability twice, let those abilities resolve, then gain 2 life, each opponent will lose a total of 4 life.
-                    </p>
-                </div>
-            </div>
         </div>
     </div>
     <div class="text-center text-muted small mt-5 mb-2">

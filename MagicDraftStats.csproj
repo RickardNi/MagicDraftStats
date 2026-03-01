@@ -12,4 +12,30 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="9.0.6" PrivateAssets="all" />
   </ItemGroup>
 
+  <Target Name="GenerateDecksList" BeforeTargets="BeforeBuild">
+    <ItemGroup>
+      <DeckFiles Include="wwwroot/data/decks/*.json"
+                 Exclude="wwwroot/data/decks.json" />
+    </ItemGroup>
+
+    <PropertyGroup>
+      <DeckListJson>{
+  &quot;files&quot;: [
+@(DeckFiles->'    &quot;%(Filename)%(Extension)&quot;',',
+')
+  ]
+}</DeckListJson>
+    </PropertyGroup>
+
+    <MakeDir Directories="wwwroot/data" />
+
+    <WriteLinesToFile
+      File="wwwroot/data/decks.json"
+      Lines="$(DeckListJson)"
+      Overwrite="true"
+      WriteOnlyWhenDifferent="true" />
+
+    <Message Importance="high" Text="Generated data/decks.json with @(DeckFiles->Count()) deck files" />
+  </Target>
+
 </Project>

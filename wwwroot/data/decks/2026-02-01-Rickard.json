@@ -1,0 +1,40 @@
+{
+  "playerRefId": 2,
+  "date": "2026-02-01",
+  "rank": 1,
+  "deckSize": 40,
+  "cards": [
+    { "name": "Dragonmaster Outcast", "count": 1 },
+    { "name": "Leonin Vanguard", "count": 1 },
+    { "name": "Giada, Font of Hope", "count": 1 },
+    { "name": "Youthful Valkyrie", "count": 1 },
+    { "name": "Skyknight Squire", "count": 1 },
+    { "name": "Cathar Commando", "count": 1 },
+    { "name": "Courageous Goblin", "count": 1 },
+    { "name": "Swiftblade Vindicator", "count": 1 },
+    { "name": "Inspiring Overseer", "count": 1 },
+    { "name": "Prideful Parent", "count": 1 },
+    { "name": "Firespitter Whelp", "count": 1 },
+    { "name": "Taurean Mauler", "count": 1 },
+    { "name": "Jazal Goldmane", "count": 1 },
+    { "name": "Angel of Finality", "count": 1 },
+    { "name": "Etali, Primal Storm", "count": 1 },
+    { "name": "Crash Through", "count": 1 },
+    { "name": "Boros Charm", "count": 1 },
+    { "name": "Scorching Dragonfire", "count": 1 },
+    { "name": "Pacifism", "count": 1 },
+    { "name": "Make Your Move", "count": 1 },
+    { "name": "Electroduplicate", "count": 1 },
+    { "name": "Celestial Armor", "count": 1 },
+    { "name": "Involuntary Employment", "count": 1 },
+    { "name": "Valkyrie's Call", "count": 1 },
+	{ "name": "Mountain", "count": 7 },
+	{ "name": "Plains", "count": 8 },
+    { "name": "Boros Guildgate", "count": 1 }
+  ],
+  "sideboard": [
+    { "name": "Rapacious Dragon", "count": 1 },
+	{ "name": "Fumigate", "count": 1 },
+	{ "name": "Sire of Seven Deaths", "count": 1 }
+  ]
+}

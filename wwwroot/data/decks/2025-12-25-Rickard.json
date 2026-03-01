@@ -1,0 +1,41 @@
+{
+  "playerRefId": 2,
+  "date": "2025-12-25",
+  "rank": 1,
+  "deckSize": 40,
+  "cards": [
+    { "name": "Tinybones, Bauble Burglar", "count": 1 },
+    { "name": "Vampire Nighthawk", "count": 1 },
+    { "name": "Alesha, Who Laughs at Fate", "count": 1 },
+    { "name": "Firespitter Whelp", "count": 1 },
+    { "name": "Taurean Mauler", "count": 1 },
+    { "name": "Strongbox Raider", "count": 1 },
+    { "name": "Bloodtithe Collector", "count": 1 },
+    { "name": "Arbiter of Woe", "count": 1 },
+    { "name": "Drakuseth, Maw of Flames", "count": 1 },
+    { "name": "Zul Ashur, Lich Lord", "count": 1 },
+    { "name": "Midnight Reaper", "count": 1 },
+    { "name": "Nine-Lives Familiar", "count": 1 },
+    { "name": "Marauding Blight-Priest", "count": 1 },
+    { "name": "Heartfire Immolator", "count": 1 },
+    { "name": "Basilisk Collar", "count": 1 },
+    { "name": "Stab", "count": 1 },
+    { "name": "Feed the Swarm", "count": 1 },
+    { "name": "Bulk Up", "count": 1 },
+    { "name": "Abrade", "count": 1 },
+    { "name": "Moment of Craving", "count": 1 },
+    { "name": "Slagstorm", "count": 1 },
+    { "name": "Fiery Annihilation", "count": 1 },
+    { "name": "Seeker's Folly", "count": 1 },
+	{ "name": "Mountain", "count": 8 },
+	{ "name": "Swamp", "count": 8 },
+	{ "name": "Bloodfell Caves", "count": 1 }
+  ],
+  "sideboard": [
+    { "name": "Ramos, Dragon Engine", "count": 1 },
+	{ "name": "Lathliss, Dragon Queen", "count": 1 },
+	{ "name": "Carnelian Orb of Dragonkind", "count": 1 },
+	{ "name": "Zombify", "count": 1 },
+	{ "name": "Etali, Primal Storm", "count": 1 }
+  ]
+}

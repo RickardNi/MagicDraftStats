@@ -1,0 +1,40 @@
+{
+  "playerRefId": 2,
+  "date": "2026-02-08",
+  "rank": 1,
+  "deckSize": 40,
+  "cards": [
+    { "name": "Leonin Vanguard", "count": 1 },
+    { "name": "Healer's Hawk", "count": 1 },
+    { "name": "Resolute Reinforcements", "count": 1 },
+    { "name": "Brineborn Cutthroat", "count": 1 },
+    { "name": "Mischievous Mystic", "count": 1 },
+    { "name": "Dawnwing Marshal", "count": 1 },
+    { "name": "Kaito, Cunning Infiltrator", "count": 1 },
+    { "name": "Dazzling Angel", "count": 1 },
+    { "name": "Ajani, Caller of the Pride", "count": 1 },
+    { "name": "Arahbo, the First Fang", "count": 1 },
+    { "name": "Felidar Savior", "count": 1 },
+    { "name": "Regal Caracal", "count": 1 },
+    { "name": "Essence Scatter", "count": 1 },
+    { "name": "Think Twice", "count": 1 },
+    { "name": "Pacifism", "count": 1 },
+    { "name": "Faebloom Trick", "count": 1 },
+    { "name": "Banishing Light", "count": 1 },
+    { "name": "Prayer of Binding", "count": 1 },
+    { "name": "Rite of Replication", "count": 1 },
+    { "name": "Aetherize", "count": 1 },
+    { "name": "Angelic Destiny", "count": 1 },
+    { "name": "Leyline Axe", "count": 1 },
+    { "name": "River's Rebuke", "count": 1 },
+	{ "name": "Island", "count": 7 }
+	{ "name": "Plains", "count": 9 }
+    { "name": "Crawling Barrens", "count": 1 }
+  ],
+  "sideboard": [
+    { "name": "Arcane Epiphany", "count": 1 },
+    { "name": "Fumigate", "count": 1 },
+    { "name": "Meteor Golem", "count": 1 },
+    { "name": "Hedron Archive", "count": 1 }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "playerRefId": 2,
+  "date": "2026-02-23",
+  "rank": 1,
+  "deckSize": 40,
+  "cards": [
+    { "name": "Three Tree Mascot", "count": 1 },
+    { "name": "Zul Ashur, Lich Lord", "count": 1 },
+    { "name": "Gnarlid Colony", "count": 1 },
+    { "name": "Gatekeeper of Malakir", "count": 1 },
+    { "name": "Nessian Hornbeetle", "count": 1 },
+    { "name": "Vengeful Bloodwitch", "count": 1 },
+    { "name": "Loot, Exuberant Explorer", "count": 1 },
+    { "name": "Springbloom Druid", "count": 1 },
+    { "name": "Predator Ooze", "count": 1 },
+    { "name": "Desecration Demon", "count": 1 },
+    { "name": "Bloodthirsty Collector", "count": 1 },
+    { "name": "High-Society Hunter", "count": 1 },
+    { "name": "Vivien Reid", "count": 1 },
+    { "name": "Aggressive Mammoth", "count": 1 },
+    { "name": "Liliana, Dreadhorde General", "count": 1 },
+    { "name": "Giant Growth", "count": 1 },
+    { "name": "Stab", "count": 2 },
+    { "name": "Deadly Brew", "count": 1 },
+    { "name": "Mazemind Tome", "count": 1 },
+    { "name": "Phyrexian Arena", "count": 1 },
+    { "name": "Primeval Bounty", "count": 1 },
+    { "name": "Swamp", "count": 8 },
+    { "name": "Forest", "count": 7 },
+    { "name": "Golgari Guildgate", "count": 1 },
+    { "name": "Temple of Malady", "count": 1 }
+  ]
+}

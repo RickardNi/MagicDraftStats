@@ -16,7 +16,9 @@ public class DeckCardVisual
     public int Count { get; set; }
     public decimal? ManaValue { get; set; }
     public bool IsLand { get; set; }
+    public bool IsBasicLand { get; set; }
     public bool IsCreature { get; set; }
+    public bool IsPlaneswalker { get; set; }
     public string ImageUrl { get; set; } = string.Empty;
     public string? ScryfallUrl { get; set; }
 }
@@ -144,7 +146,10 @@ public class ScryfallCardService(HttpClient httpClient, ILogger<ScryfallCardServ
 
         var typeLine = card?.TypeLine ?? string.Empty;
         var isLand = typeLine.Contains("Land", StringComparison.OrdinalIgnoreCase);
+        var isBasicLand = typeLine.Contains("Basic", StringComparison.OrdinalIgnoreCase)
+            && typeLine.Contains("Land", StringComparison.OrdinalIgnoreCase);
         var isCreature = typeLine.Contains("Creature", StringComparison.OrdinalIgnoreCase);
+        var isPlaneswalker = typeLine.Contains("Planeswalker", StringComparison.OrdinalIgnoreCase);
 
         return new DeckCardVisual
         {
@@ -152,7 +157,9 @@ public class ScryfallCardService(HttpClient httpClient, ILogger<ScryfallCardServ
             Count = count,
             ManaValue = card?.Cmc,
             IsLand = isLand,
+            IsBasicLand = isBasicLand,
             IsCreature = isCreature,
+            IsPlaneswalker = isPlaneswalker,
             ImageUrl = imageUrl,
             ScryfallUrl = card?.ScryfallUri
         };

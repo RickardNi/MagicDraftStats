@@ -1,0 +1,50 @@
+.deck-visual-columns {
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+.deck-visual-column {
+    min-width: 170px;
+    max-width: 170px;
+}
+
+.card-stack {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 0.5rem;
+}
+
+.primary-stack-slot {
+    margin-bottom: 0.25rem;
+}
+
+.stack-card {
+    position: relative;
+}
+
+.stack-card + .stack-card {
+    margin-top: -211px;
+}
+
+#deck-visual-hover-preview {
+    position: fixed;
+    display: none;
+    width: 300px;
+    z-index: 2000;
+    pointer-events: none;
+    background: var(--bs-body-bg);
+    border-radius: 0.5rem;
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .2);
+}
+
+#deck-visual-hover-preview img {
+    width: 100%;
+    display: block;
+    border-radius: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    #deck-visual-hover-preview {
+        width: 240px;
+    }
+}

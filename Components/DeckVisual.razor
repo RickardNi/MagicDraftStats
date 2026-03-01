@@ -20,10 +20,10 @@ else if (errorMessage != null)
 }
 else
 {
-    <div class="d-flex align-items-start gap-3 flex-nowrap overflow-auto pb-2">
+    <div class="deck-visual-columns d-flex align-items-start gap-3 flex-nowrap pb-2">
         @foreach (var pile in manaPiles)
         {
-            <div class="d-flex flex-column" style="min-width: 170px; max-width: 170px;">
+            <div class="deck-visual-column d-flex flex-column">
                 <h6 class="fw-bold mb-2 text-center">
                     @if (pile.IsLands)
                     {
@@ -34,24 +34,77 @@ else
                         <span>@pile.Label</span>
                     }
                 </h6>
-                <div class="d-flex flex-column gap-2">
-                    @foreach (var card in pile.Cards)
+
+                @if (pile.PrimaryCards.Any())
+                {
+                    @if (pile.IsLands)
                     {
-                        @for (var i = 0; i < card.Count; i++)
-                        {
-                            @if (!string.IsNullOrWhiteSpace(card.ScryfallUrl))
+                        <div class="card-stack mb-3">
+                            @foreach (var card in ExpandCards(pile.PrimaryCards))
                             {
-                                <a href="@card.ScryfallUrl" target="_blank" rel="noopener" class="text-decoration-none">
-                                    <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="lazy" />
-                                </a>
+                                <div class="stack-card" data-preview-url="@card.ImageUrl" data-preview-alt="@card.Name" onmouseenter="DeckVisualTooltip.show(event, this)" onmousemove="DeckVisualTooltip.move(event, this)" onmouseleave="DeckVisualTooltip.hide()">
+                                    @if (!string.IsNullOrWhiteSpace(card.ScryfallUrl))
+                                    {
+                                        <a href="@card.ScryfallUrl" target="_blank" rel="noopener" class="text-decoration-none d-block">
+                                            <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="lazy" />
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="lazy" />
+                                    }
+                                </div>
                             }
-                            else
-                            {
-                                <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="lazy" />
-                            }
-                        }
+                        </div>
                     }
-                </div>
+                    else
+                    {
+                        <div class="primary-stack-slot" style="@GetPrimarySlotStyle()">
+                            <div class="card-stack mb-3">
+                                @foreach (var card in ExpandCards(pile.PrimaryCards))
+                                {
+                                    <div class="stack-card" data-preview-url="@card.ImageUrl" data-preview-alt="@card.Name" onmouseenter="DeckVisualTooltip.show(event, this)" onmousemove="DeckVisualTooltip.move(event, this)" onmouseleave="DeckVisualTooltip.hide()">
+                                        @if (!string.IsNullOrWhiteSpace(card.ScryfallUrl))
+                                        {
+                                            <a href="@card.ScryfallUrl" target="_blank" rel="noopener" class="text-decoration-none d-block">
+                                                <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="lazy" />
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="lazy" />
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+                else if (!pile.IsLands)
+                {
+                    <div class="primary-stack-slot" style="@GetPrimarySlotStyle()"></div>
+                }
+
+                @if (pile.SecondaryCards.Any())
+                {
+                    <div class="card-stack">
+                        @foreach (var card in ExpandCards(pile.SecondaryCards))
+                        {
+                            <div class="stack-card" data-preview-url="@card.ImageUrl" data-preview-alt="@card.Name" onmouseenter="DeckVisualTooltip.show(event, this)" onmousemove="DeckVisualTooltip.move(event, this)" onmouseleave="DeckVisualTooltip.hide()">
+                                @if (!string.IsNullOrWhiteSpace(card.ScryfallUrl))
+                                {
+                                    <a href="@card.ScryfallUrl" target="_blank" rel="noopener" class="text-decoration-none d-block">
+                                        <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="lazy" />
+                                    </a>
+                                }
+                                else
+                                {
+                                    <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="lazy" />
+                                }
+                            </div>
+                        }
+                    </div>
+                }
             </div>
         }
     </div>
@@ -64,6 +117,7 @@ else
     private bool isLoading = true;
     private string? errorMessage;
     private List<ManaPile> manaPiles = new();
+    private int maxPrimaryStackCount = 0;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -75,6 +129,7 @@ else
         if (Cards == null || !Cards.Any())
         {
             manaPiles = new();
+            maxPrimaryStackCount = 0;
             isLoading = false;
             errorMessage = null;
             return;
@@ -96,9 +151,13 @@ else
                 {
                     Label = group.Key,
                     IsLands = false,
-                    Cards = group
-                        .OrderByDescending(card => card.IsCreature)
-                        .ThenBy(card => card.Name)
+                    PrimaryCards = group
+                        .Where(card => card.IsCreature || card.IsPlaneswalker)
+                        .OrderBy(card => card.Name)
+                        .ToList(),
+                    SecondaryCards = group
+                        .Where(card => !card.IsCreature && !card.IsPlaneswalker)
+                        .OrderBy(card => card.Name)
                         .ToList()
                 })
                 .ToList();
@@ -109,19 +168,26 @@ else
                 {
                     Label = "Lands",
                     IsLands = true,
-                    Cards = lands
-                        .OrderByDescending(card => card.IsCreature)
+                    PrimaryCards = lands
+                        .OrderByDescending(card => card.IsBasicLand)
                         .ThenBy(card => card.Name)
-                        .ToList()
+                        .ToList(),
+                    SecondaryCards = new List<DeckCardVisual>()
                 });
             }
 
             manaPiles = groupedNonLands;
+            maxPrimaryStackCount = groupedNonLands
+                .Where(pile => !pile.IsLands)
+                .Select(pile => ExpandCards(pile.PrimaryCards).Count())
+                .DefaultIfEmpty(0)
+                .Max();
         }
         catch (Exception ex)
         {
             errorMessage = $"Could not load card visuals: {ex.Message}";
             manaPiles = new();
+            maxPrimaryStackCount = 0;
         }
         finally
         {
@@ -129,10 +195,37 @@ else
         }
     }
 
+    private string GetPrimarySlotStyle()
+    {
+        const int firstCardHeight = 235;
+        const int revealStep = 24;
+        const int interStackGap = 20;
+
+        if (maxPrimaryStackCount <= 0)
+        {
+            return "height: 0;";
+        }
+
+        var slotHeight = firstCardHeight + ((maxPrimaryStackCount - 1) * revealStep) + interStackGap;
+        return $"height: {slotHeight}px;";
+    }
+
+    private static IEnumerable<DeckCardVisual> ExpandCards(IEnumerable<DeckCardVisual> cards)
+    {
+        foreach (var card in cards)
+        {
+            for (var countIndex = 0; countIndex < card.Count; countIndex++)
+            {
+                yield return card;
+            }
+        }
+    }
+
     private class ManaPile
     {
         public string Label { get; set; } = string.Empty;
         public bool IsLands { get; set; }
-        public List<DeckCardVisual> Cards { get; set; } = new();
+        public List<DeckCardVisual> PrimaryCards { get; set; } = new();
+        public List<DeckCardVisual> SecondaryCards { get; set; } = new();
     }
 }

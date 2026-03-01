@@ -23,7 +23,7 @@ namespace MagicDraftStats.Services
             
             // Return a relative path without leading slash to work with base href
             // This ensures it works correctly on GitHub Pages with /MagicDraftStats/ base href
-            return $"deck/{encodedDeckName}";
+            return $"color/{encodedDeckName}";
         }
 
         public static string GetPlayerUrl(int playerId)

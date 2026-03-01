@@ -1,4 +1,4 @@
-@page "/deck/{urlDeckName}"
+@page "/color/{urlDeckName}"
 @using MagicDraftStats.Models
 @using MagicDraftStats.Services
 @using MagicDraftStats.Components
@@ -6,17 +6,17 @@
 @inject IBGStatsImportService BGStatsService
 @inject IGlobalFilterService GlobalFilterService
 
-<PageTitle>Magic Draft Stats - Deck Details</PageTitle>
+<PageTitle>Magic Draft Stats - Color Details</PageTitle>
 
 <div class="container mt-4">
     <div>
-        <h1><i class="bi bi-file-bar-graph-fill me-4"></i>Deck: <span class="fw-bold">@(deckStats?.DeckName ?? HttpUtility.UrlDecode(urlDeckName))</span></h1>
+        <h1><i class="bi bi-file-bar-graph-fill me-4"></i>Color: <span class="fw-bold">@(deckStats?.DeckName ?? HttpUtility.UrlDecode(urlDeckName))</span></h1>
     </div>
 
     @if (isLoading)
     {
         <div class="alert alert-info">
-            <i class="bi bi-arrow-clockwise spin me-2"></i>Loading deck details...
+            <i class="bi bi-arrow-clockwise spin me-2"></i>Loading color details...
         </div>
     }
     else if (errorMessage != null)
@@ -28,7 +28,7 @@
     else if (deckStats == null)
     {
         <div class="alert alert-warning">
-            <i class="bi bi-exclamation-triangle"></i> Deck not found.
+            <i class="bi bi-exclamation-triangle"></i> Color not found.
         </div>
     }
     else

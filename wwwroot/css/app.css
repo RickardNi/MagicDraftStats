@@ -334,6 +334,71 @@ dl.row > dd > .d-flex {
     filter: drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.9));
 }
 
+.cards-stat-tooltip {
+    --bs-tooltip-bg: #ffffff;
+    --bs-tooltip-color: var(--bs-body-color);
+    --bs-tooltip-opacity: 1;
+}
+
+.cards-stat-tooltip .tooltip-inner {
+    max-width: 360px;
+    text-align: left;
+    font-size: 1.02rem;
+    line-height: 1.45;
+    padding: 0.7rem 0.85rem;
+    border-radius: 0.6rem;
+    white-space: pre-line;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.cards-stat-tooltip.bs-tooltip-top .tooltip-arrow::before {
+    border-top-color: #ffffff;
+}
+
+.cards-stat-tooltip.bs-tooltip-bottom .tooltip-arrow::before {
+    border-bottom-color: #ffffff;
+}
+
+.cards-stat-tooltip.bs-tooltip-start .tooltip-arrow::before {
+    border-left-color: #ffffff;
+}
+
+.cards-stat-tooltip.bs-tooltip-end .tooltip-arrow::before {
+    border-right-color: #ffffff;
+}
+
+.card-header .btn[data-bs-toggle="collapse"] .bi-chevron-down {
+    transition: transform .2s ease-in-out;
+}
+
+.card-header .btn[data-bs-toggle="collapse"] {
+    color: inherit;
+}
+
+.card-header .btn[data-bs-toggle="collapse"]:hover,
+.card-header .btn[data-bs-toggle="collapse"]:focus,
+.card-header .btn[data-bs-toggle="collapse"]:active {
+    color: inherit;
+    text-decoration: none;
+}
+
+.card-header .btn[data-bs-toggle="collapse"]:not(.collapsed) .bi-chevron-down {
+    transform: rotate(180deg);
+}
+
+.btn,
+.btn:focus,
+.btn:active,
+.btn.active,
+.btn.show,
+.btn-check:focus + .btn,
+.btn:first-child:active,
+.btn:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
 /* =============================================================================
    CUSTOM COLOR UTILITIES
    ============================================================================= */

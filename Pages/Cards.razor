@@ -4,6 +4,7 @@
 @using MagicDraftStats.Services
 @inject IDeckImportService DeckImportService
 @inject IScryfallCardService ScryfallCardService
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Magic Draft Stats - Cards</PageTitle>
 
@@ -35,6 +36,75 @@
     }
     else
     {
+        var filteredRows = GetFilteredRows().ToList();
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <button class="btn btn-link text-decoration-none p-0 w-100 d-flex align-items-center justify-content-between fw-semibold collapsed"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#cardsFiltersCollapse"
+                        aria-expanded="false"
+                        aria-controls="cardsFiltersCollapse">
+                    <span><i class="bi bi-funnel me-2"></i>Filters</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+            </div>
+            <div id="cardsFiltersCollapse" class="collapse">
+                <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12 col-lg-4">
+                        <label class="form-label fw-bold mb-2">Colors</label>
+                        <div class="d-flex flex-column gap-1">
+                            @foreach (var color in colorFilterOrder)
+                            {
+                                var checkboxId = $"cards-filter-color-{color}";
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="@checkboxId" checked="@selectedColorFilters.Contains(color)" @onchange="(e) => OnColorFilterChanged(color, e.Value)" />
+                                    <label class="form-check-label" for="@checkboxId">@GetColorFilterLabel(color)</label>
+                                </div>
+                            }
+                        </div>
+                        <div class="mt-3">
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Color filter actions">
+                                <button class="btn btn-outline-primary" @onclick="SelectAllColors">Select All</button>
+                                <button class="btn btn-outline-secondary" @onclick="ClearAllColors">Clear All</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-8">
+                        <label class="form-label fw-bold mb-2">Types</label>
+                        <div class="row row-cols-1 row-cols-md-2 g-1">
+                            @foreach (var type in availableTypeFilters)
+                            {
+                                var checkboxId = $"cards-filter-type-{type.Replace(" ", "-").ToLowerInvariant()}";
+                                <div class="col">
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" id="@checkboxId" checked="@selectedTypeFilters.Contains(type)" @onchange="(e) => OnTypeFilterChanged(type, e.Value)" />
+                                        <label class="form-check-label" for="@checkboxId">@type</label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="mt-3">
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Type filter actions">
+                                <button class="btn btn-outline-primary" @onclick="SelectAllTypes">Select All</button>
+                                <button class="btn btn-outline-secondary" @onclick="ClearAllTypes">Clear All</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12 col-md-3">
+                        <button class="btn btn-secondary w-100" @onclick="ResetFilters">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Reset Filters
+                        </button>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-body">
                 <div class="table-responsive">
@@ -60,37 +130,37 @@
                                     </button>
                                 </th>
                                 <th class="text-center">
-                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Decks)">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Decks)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.Decks)">
                                         Decks
                                         @SortIcon(SortColumn.Decks)
                                     </button>
                                 </th>
                                 <th class="text-center">
-                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.PlayedPercent)">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.PlayedPercent)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.PlayedPercent)">
                                         Played %
                                         @SortIcon(SortColumn.PlayedPercent)
                                     </button>
                                 </th>
                                 <th class="text-center">
-                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.WinnerDecks)">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.WinnerDecks)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.WinnerDecks)">
                                         Winner Decks
                                         @SortIcon(SortColumn.WinnerDecks)
                                     </button>
                                 </th>
                                 <th class="text-center">
-                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.WinnerDeckPercent)">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.WinnerDeckPercent)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.WinnerDeckPercent)">
                                         Winner Deck %
                                         @SortIcon(SortColumn.WinnerDeckPercent)
                                     </button>
                                 </th>
                                 <th class="text-center">
-                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.WinnerSharePercent)">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.WinnerSharePercent)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.WinnerSharePercent)">
                                         Win Share
                                         @SortIcon(SortColumn.WinnerSharePercent)
                                     </button>
                                 </th>
                                 <th class="text-center">
-                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.AverageRank)">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.AverageRank)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.AverageRank)">
                                         Avg Rank
                                         @SortIcon(SortColumn.AverageRank)
                                     </button>
@@ -98,7 +168,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var card in GetSortedRows())
+                            @foreach (var card in GetSortedRows(filteredRows))
                             {
                                 <tr>
                                     <td>
@@ -153,8 +223,24 @@
     private List<CardRow> cardRows = new();
     private int totalDeckCount;
     private int totalWinnerDeckCount;
-    private SortColumn currentSortColumn = SortColumn.Decks;
+    private readonly List<string> colorFilterOrder = ["W", "U", "B", "R", "G", "C"];
+    private List<string> availableTypeFilters = new();
+    private HashSet<string> selectedColorFilters = new(StringComparer.Ordinal);
+    private HashSet<string> selectedTypeFilters = new(StringComparer.OrdinalIgnoreCase);
+    private SortColumn currentSortColumn = SortColumn.WinnerDeckPercent;
     private bool isAscending = false;
+
+    private static readonly string[] TypeFilterDisplayOrder =
+    [
+        "Creature",
+        "Instant",
+        "Sorcery",
+        "Artifact",
+        "Enchantment",
+        "Planeswalker",
+        "Land",
+        "Basic Land"
+    ];
 
     private enum SortColumn
     {
@@ -172,6 +258,11 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JSRuntime.InvokeVoidAsync("MagicDraftStatsTooltips.init", "[data-bs-toggle='tooltip']");
     }
 
     private async Task LoadData()
@@ -240,6 +331,8 @@
                 .OrderByDescending(row => row.DeckCount)
                 .ThenBy(row => row.CardName, StringComparer.Ordinal)
                 .ToList();
+
+            InitializeFilters();
         }
         catch (Exception ex)
         {
@@ -264,6 +357,12 @@
             ? string.Join(" / ", metadata.Types)
             : "";
 
+        var cardTypes = GetCardTypes(metadata);
+        var isBasicLand = cardTypes.Contains("Basic Land", StringComparer.OrdinalIgnoreCase);
+        var colorFilterKeys = colors.Length > 0
+            ? colors.Distinct(StringComparer.Ordinal).OrderBy(ColorIdentityHelper.GetColorOrder).ToList()
+            : ["C"];
+
         return new CardRow
         {
             CardName = aggregate.CardName,
@@ -273,6 +372,9 @@
                 .OrderBy(ColorIdentityHelper.GetColorOrder)
                 .Select(color => new DeckColorSymbol(color, false))
                 .ToList(),
+            ColorFilterKeys = colorFilterKeys,
+            TypeFilters = cardTypes,
+            IsBasicLand = isBasicLand,
             ImageUrl = visual?.ImageUrl ?? $"https://api.scryfall.com/cards/named?exact={Uri.EscapeDataString(aggregate.CardName)}&set=fdn&format=image",
             DeckCount = aggregate.DeckCount,
             PlayedPercent = totalDeckCount > 0 ? (double)aggregate.DeckCount / totalDeckCount : null,
@@ -296,44 +398,238 @@
         }
     }
 
-    private IEnumerable<CardRow> GetSortedRows()
+    private void InitializeFilters()
+    {
+        availableTypeFilters = cardRows
+            .SelectMany(row => row.TypeFilters)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(type => Array.IndexOf(TypeFilterDisplayOrder, type) >= 0 ? Array.IndexOf(TypeFilterDisplayOrder, type) : int.MaxValue)
+            .ThenBy(type => type, StringComparer.Ordinal)
+            .ToList();
+
+        if (selectedColorFilters.Count == 0)
+        {
+            selectedColorFilters = colorFilterOrder.ToHashSet(StringComparer.Ordinal);
+        }
+        else
+        {
+            selectedColorFilters.IntersectWith(colorFilterOrder);
+            if (selectedColorFilters.Count == 0)
+            {
+                selectedColorFilters = colorFilterOrder.ToHashSet(StringComparer.Ordinal);
+            }
+        }
+
+        if (selectedTypeFilters.Count == 0)
+        {
+            selectedTypeFilters = availableTypeFilters
+                .Where(type => !type.Equals("Basic Land", StringComparison.OrdinalIgnoreCase))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        }
+        else
+        {
+            selectedTypeFilters.IntersectWith(availableTypeFilters);
+            if (selectedTypeFilters.Count == 0)
+            {
+                selectedTypeFilters = availableTypeFilters
+                    .Where(type => !type.Equals("Basic Land", StringComparison.OrdinalIgnoreCase))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            }
+        }
+    }
+
+    private IEnumerable<CardRow> GetFilteredRows()
+    {
+        return cardRows.Where(row =>
+        {
+            var matchesColor = selectedColorFilters.Count == 0
+                || row.ColorFilterKeys.Any(color => selectedColorFilters.Contains(color));
+
+            var matchesType = selectedTypeFilters.Count == 0
+                || row.TypeFilters.Any(type => selectedTypeFilters.Contains(type));
+
+            var basicLandAllowed = !row.IsBasicLand || selectedTypeFilters.Contains("Basic Land");
+
+            return matchesColor && matchesType && basicLandAllowed;
+        });
+    }
+
+    private IEnumerable<CardRow> GetSortedRows(IEnumerable<CardRow> source)
     {
         var query = currentSortColumn switch
         {
             SortColumn.CardName => isAscending
-                ? cardRows.OrderBy(row => row.CardName, StringComparer.Ordinal)
-                : cardRows.OrderByDescending(row => row.CardName, StringComparer.Ordinal),
+                ? source.OrderBy(row => row.CardName, StringComparer.Ordinal)
+                : source.OrderByDescending(row => row.CardName, StringComparer.Ordinal),
             SortColumn.Type => isAscending
-                ? cardRows.OrderBy(row => row.TypeLine, StringComparer.Ordinal)
-                : cardRows.OrderByDescending(row => row.TypeLine, StringComparer.Ordinal),
+                ? source.OrderBy(row => row.TypeLine, StringComparer.Ordinal)
+                : source.OrderByDescending(row => row.TypeLine, StringComparer.Ordinal),
             SortColumn.Color => isAscending
-                ? cardRows.OrderBy(row => row.ColorKey)
-                : cardRows.OrderByDescending(row => row.ColorKey),
+                ? source.OrderBy(row => row.ColorKey)
+                : source.OrderByDescending(row => row.ColorKey),
             SortColumn.Decks => isAscending
-                ? cardRows.OrderBy(row => row.DeckCount)
-                : cardRows.OrderByDescending(row => row.DeckCount),
+                ? source.OrderBy(row => row.DeckCount)
+                : source.OrderByDescending(row => row.DeckCount),
             SortColumn.PlayedPercent => isAscending
-                ? cardRows.OrderBy(row => row.PlayedPercent ?? -1)
-                : cardRows.OrderByDescending(row => row.PlayedPercent ?? -1),
+                ? source.OrderBy(row => row.PlayedPercent ?? -1)
+                : source.OrderByDescending(row => row.PlayedPercent ?? -1),
             SortColumn.WinnerDecks => isAscending
-                ? cardRows.OrderBy(row => row.WinnerDeckCount)
-                : cardRows.OrderByDescending(row => row.WinnerDeckCount),
+                ? source.OrderBy(row => row.WinnerDeckCount)
+                : source.OrderByDescending(row => row.WinnerDeckCount),
             SortColumn.WinnerDeckPercent => isAscending
-                ? cardRows.OrderBy(row => row.WinnerDeckPercent ?? -1)
-                : cardRows.OrderByDescending(row => row.WinnerDeckPercent ?? -1),
+                ? source.OrderBy(row => row.WinnerDeckPercent ?? -1)
+                : source.OrderByDescending(row => row.WinnerDeckPercent ?? -1),
             SortColumn.WinnerSharePercent => isAscending
-                ? cardRows.OrderBy(row => row.WinnerSharePercent ?? -1)
-                : cardRows.OrderByDescending(row => row.WinnerSharePercent ?? -1),
+                ? source.OrderBy(row => row.WinnerSharePercent ?? -1)
+                : source.OrderByDescending(row => row.WinnerSharePercent ?? -1),
             SortColumn.AverageRank => isAscending
-                ? cardRows.OrderBy(row => row.AverageRank ?? double.MaxValue)
-                : cardRows.OrderByDescending(row => row.AverageRank ?? -1),
-            _ => cardRows.OrderByDescending(row => row.DeckCount)
+                ? source.OrderBy(row => row.AverageRank ?? double.MaxValue)
+                : source.OrderByDescending(row => row.AverageRank ?? -1),
+            _ => source.OrderByDescending(row => row.DeckCount)
         };
 
         return query
             .ThenByDescending(row => row.DeckCount)
             .ThenBy(row => row.CardName, StringComparer.Ordinal);
     }
+
+    private void OnColorFilterChanged(string color, object? value)
+    {
+        var isChecked = value is bool checkedValue && checkedValue;
+        if (isChecked)
+        {
+            selectedColorFilters.Add(color);
+        }
+        else
+        {
+            selectedColorFilters.Remove(color);
+        }
+    }
+
+    private void OnTypeFilterChanged(string type, object? value)
+    {
+        var isChecked = value is bool checkedValue && checkedValue;
+        if (isChecked)
+        {
+            selectedTypeFilters.Add(type);
+        }
+        else
+        {
+            selectedTypeFilters.Remove(type);
+        }
+    }
+
+    private void SelectAllColors()
+    {
+        selectedColorFilters = colorFilterOrder.ToHashSet(StringComparer.Ordinal);
+    }
+
+    private void ClearAllColors()
+    {
+        selectedColorFilters.Clear();
+    }
+
+    private void SelectAllTypes()
+    {
+        selectedTypeFilters = availableTypeFilters.ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private void ClearAllTypes()
+    {
+        selectedTypeFilters.Clear();
+    }
+
+    private void ResetFilters()
+    {
+        selectedColorFilters = colorFilterOrder.ToHashSet(StringComparer.Ordinal);
+        selectedTypeFilters = availableTypeFilters
+            .Where(type => !type.Equals("Basic Land", StringComparison.OrdinalIgnoreCase))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static List<string> GetCardTypes(FoundationsCardMetadata? metadata)
+    {
+        if (metadata is null)
+        {
+            return [];
+        }
+
+        var detectedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var typeGroup in metadata.Types)
+        {
+            var parts = typeGroup
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            if (parts.Contains("Creature", StringComparer.OrdinalIgnoreCase))
+            {
+                detectedTypes.Add("Creature");
+            }
+
+            if (parts.Contains("Instant", StringComparer.OrdinalIgnoreCase))
+            {
+                detectedTypes.Add("Instant");
+            }
+
+            if (parts.Contains("Sorcery", StringComparer.OrdinalIgnoreCase))
+            {
+                detectedTypes.Add("Sorcery");
+            }
+
+            if (parts.Contains("Artifact", StringComparer.OrdinalIgnoreCase))
+            {
+                detectedTypes.Add("Artifact");
+            }
+
+            if (parts.Contains("Enchantment", StringComparer.OrdinalIgnoreCase))
+            {
+                detectedTypes.Add("Enchantment");
+            }
+
+            if (parts.Contains("Planeswalker", StringComparer.OrdinalIgnoreCase))
+            {
+                detectedTypes.Add("Planeswalker");
+            }
+
+            if (parts.Contains("Land", StringComparer.OrdinalIgnoreCase))
+            {
+                detectedTypes.Add("Land");
+            }
+
+            if (parts.Contains("Basic", StringComparer.OrdinalIgnoreCase)
+                && parts.Contains("Land", StringComparer.OrdinalIgnoreCase))
+            {
+                detectedTypes.Add("Basic Land");
+            }
+        }
+
+        return detectedTypes
+            .OrderBy(type => Array.IndexOf(TypeFilterDisplayOrder, type) >= 0 ? Array.IndexOf(TypeFilterDisplayOrder, type) : int.MaxValue)
+            .ThenBy(type => type, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private static string GetColorFilterLabel(string color) => color switch
+    {
+        "W" => "White",
+        "U" => "Blue",
+        "B" => "Black",
+        "R" => "Red",
+        "G" => "Green",
+        "C" => "Colorless",
+        _ => color
+    };
+
+    private static string GetStatTooltip(SortColumn column) => column switch
+    {
+        SortColumn.Decks => "How many decks include this card at least once.\n\nUsefulness: Low-Medium for card quality (mainly sample size/popularity).",
+        SortColumn.PlayedPercent => "Decks with card / all decks.\n\nUsefulness: Low-Medium (mostly popularity/availability).",
+        SortColumn.WinnerDecks => "How many rank-1 decks include this card.\n\nUsefulness: Low by itself (biased by popularity).",
+        SortColumn.WinnerDeckPercent => "Winner decks with card / all winner decks.\n\nUsefulness: Medium (presence in successful decks, still popularity-biased).",
+        SortColumn.WinnerSharePercent => "Winner decks with card / decks with card.\nInterpretation: if a deck includes this card, how often that deck is rank-1.\n\nUsefulness: Medium-High (best current single proxy).",
+        SortColumn.AverageRank => "Average deck rank where this card appears (1 is best).\n\nUsefulness: Medium (good direction, noisy at small sample sizes).",
+        _ => string.Empty
+    };
 
     private MarkupString SortIcon(SortColumn column)
     {
@@ -379,6 +675,9 @@
         public string CardName { get; set; } = string.Empty;
         public string TypeLine { get; set; } = string.Empty;
         public List<DeckColorSymbol> ColorSymbols { get; set; } = new();
+        public List<string> ColorFilterKeys { get; set; } = new();
+        public List<string> TypeFilters { get; set; } = new();
+        public bool IsBasicLand { get; set; }
         public string ImageUrl { get; set; } = string.Empty;
         public int DeckCount { get; set; }
         public int WinnerDeckCount { get; set; }

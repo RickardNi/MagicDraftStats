@@ -11,6 +11,7 @@ public interface IDeckStatsService
     bool IsRoleMatchForDeck(DeckFile deck, string role);
     IReadOnlyList<PlayerScoreColorStatEntry> BuildPlayerScoreColorEntries(IEnumerable<Play> plays, Func<PlayerScore, bool> scorePredicate);
     IReadOnlyList<ColorIdentityStatRow> AggregateByColorIdentity(IEnumerable<PlayerScoreColorStatEntry> entries, Func<PlayerScoreColorStatEntry, bool> isWinPredicate);
+    IReadOnlyList<ColorIdentityStatRow> AggregateMonoColorInclusion(IEnumerable<PlayerScoreColorStatEntry> entries, Func<PlayerScoreColorStatEntry, bool> isWinPredicate);
     ColorInclusionStat? GetMostIncludedColor(IEnumerable<PlayerScoreColorStatEntry> entries);
     IReadOnlyList<ColorIdentityStatRow> CalculateOpponentColorIdentityStats(IEnumerable<Play> plays, int playerId);
 }
@@ -19,6 +20,7 @@ public sealed class DeckStatsService : IDeckStatsService
 {
     private readonly ConcurrentDictionary<string, DeckPlayStats> _statsCache = new(StringComparer.Ordinal);
     private static readonly ConcurrentDictionary<string, HashSet<string>> RoleColorCache = new(StringComparer.Ordinal);
+    private static readonly string[] BaseColors = ["W", "U", "B", "R", "G"];
 
     public DeckPlayStats CalculateDeckStats(DeckFile deck, IEnumerable<Play> plays)
     {
@@ -162,6 +164,34 @@ public sealed class DeckStatsService : IDeckStatsService
                     Losses: losses,
                     WinRate: plays > 0 ? wins / (double)plays : 0,
                     LastPlayed: group.Max(entry => entry.PlayedAt));
+            })
+            .ToList();
+    }
+
+    public IReadOnlyList<ColorIdentityStatRow> AggregateMonoColorInclusion(IEnumerable<PlayerScoreColorStatEntry> entries, Func<PlayerScoreColorStatEntry, bool> isWinPredicate)
+    {
+        var entryList = entries as IReadOnlyList<PlayerScoreColorStatEntry> ?? entries.ToList();
+
+        return BaseColors
+            .Select(color =>
+            {
+                var colorEntries = entryList
+                    .Where(entry => entry.ColorIdentityKeys.Any(key => key.Equals(color, StringComparison.Ordinal)))
+                    .ToList();
+
+                var wins = colorEntries.Count(isWinPredicate);
+                var plays = colorEntries.Count;
+
+                return new ColorIdentityStatRow(
+                    ColorIdentityName: ColorIdentityHelper.GetColorName(color),
+                    LinkDeckName: BuildDeckLinkName([color]),
+                    ColorIdentityKeys: [color],
+                    ColorSymbols: [new DeckColorSymbol(color, false)],
+                    Plays: plays,
+                    Wins: wins,
+                    Losses: plays - wins,
+                    WinRate: plays > 0 ? wins / (double)plays : 0,
+                    LastPlayed: colorEntries.Max(entry => entry.PlayedAt));
             })
             .ToList();
     }

@@ -247,6 +247,13 @@ dl.row > dt,
 dl.row > dd {
     display: flex;
     align-items: center;
+    margin-bottom: 0;
+    min-height: 2.25rem;
+}
+
+dl.row > dd > .d-inline-flex,
+dl.row > dd > .d-flex {
+    align-items: center;
 }
 
 .flag-icon-column {

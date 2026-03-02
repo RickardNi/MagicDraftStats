@@ -43,7 +43,7 @@
                     <div class="card-body">
                         <dl class="row mb-0">
                             <dt class="col-sm-5">Total Plays</dt>
-                            <dd class="col-sm-7">@playerStats.TotalPlays (<span class="text-success">@playerStats.Wins W</span> / <span class="text-danger">@playerStats.Losses L</span>)</dd>
+                            <dd class="col-sm-7">@playerStats.TotalPlays (<span class="text-success">@playerStats.Wins W</span>&nbsp;/&nbsp;<span class="text-danger">@playerStats.Losses L</span>)</dd>
                             <dt class="col-sm-5">Colors played</dt>
                             <dd class="col-sm-7">@uniqueDecksCount</dd>
                             <dt class="col-sm-5">Win Rate</dt>
@@ -74,7 +74,7 @@
                                                 }
                                             </span>
                                         }
-                                        <span class="text-muted">(@mostPlayedColorStats.Plays plays)</span>
+                                        <span class="text-muted ms-2">(@mostPlayedColorStats.Plays plays)</span>
                                     </span>
                                 }
                                 else
@@ -97,7 +97,53 @@
                                                 }
                                             </span>
                                         }
-                                        <span class="@Utilities.GetWinRateColorForPlayer(mostSuccessfulColorStats.WinRate)">(@Utilities.FormatWinRate(mostSuccessfulColorStats.WinRate))</span>
+                                        <span class="ms-2 @Utilities.GetWinRateColorForPlayer(mostSuccessfulColorStats.WinRate)">(@Utilities.FormatWinRate(mostSuccessfulColorStats.WinRate))</span>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </dd>
+                            <dt class="col-sm-5">Most Played Color</dt>
+                            <dd class="col-sm-7">
+                                @if (mostPlayedColorInclusionStats is not null)
+                                {
+                                    <span class="d-inline-flex align-items-center gap-1 flex-wrap">
+                                        <NavLink class="deck-link" href="@Utilities.GetDeckUrl(mostPlayedColorInclusionStats.LinkDeckName)">@mostPlayedColorInclusionStats.DeckName</NavLink>
+                                        @if (mostPlayedColorInclusionStats.ColorSymbols.Count > 0)
+                                        {
+                                            <span class="d-inline-flex align-items-center gap-1 ms-1">
+                                                @foreach (var symbol in mostPlayedColorInclusionStats.ColorSymbols)
+                                                {
+                                                    <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                                }
+                                            </span>
+                                        }
+                                        <span class="text-muted ms-2">(@mostPlayedColorInclusionStats.Plays plays)</span>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </dd>
+                            <dt class="col-sm-5">Most Successful Color</dt>
+                            <dd class="col-sm-7">
+                                @if (mostSuccessfulColorInclusionStats is not null)
+                                {
+                                    <span class="d-inline-flex align-items-center gap-1 flex-wrap">
+                                        <NavLink class="deck-link" href="@Utilities.GetDeckUrl(mostSuccessfulColorInclusionStats.LinkDeckName)">@mostSuccessfulColorInclusionStats.DeckName</NavLink>
+                                        @if (mostSuccessfulColorInclusionStats.ColorSymbols.Count > 0)
+                                        {
+                                            <span class="d-inline-flex align-items-center gap-1 ms-1">
+                                                @foreach (var symbol in mostSuccessfulColorInclusionStats.ColorSymbols)
+                                                {
+                                                    <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                                }
+                                            </span>
+                                        }
+                                        <span class="ms-2 @Utilities.GetWinRateColorForPlayer(mostSuccessfulColorInclusionStats.WinRate)">(@Utilities.FormatWinRate(mostSuccessfulColorInclusionStats.WinRate))</span>
                                     </span>
                                 }
                                 else
@@ -124,6 +170,15 @@
                         {
                             <div class="table-responsive">
                                 <table class="table table-striped table-hover">
+                                    <colgroup>
+                                        <col style="width: 22%;" />
+                                        <col style="width: 8%;" />
+                                        <col style="width: 10%;" />
+                                        <col style="width: 12%;" />
+                                        <col style="width: 10%;" />
+                                        <col style="width: 10%;" />
+                                        <col style="width: 14%;" />
+                                    </colgroup>
                                     <thead>
                                         <tr>
                                             <th>
@@ -243,6 +298,151 @@
                         else
                         {
                             <p class="text-muted mb-0">No color data available.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-filter-square"></i>Single-Color Inclusion
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (monoColorStats.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <colgroup>
+                                        <col style="width: 22%;" />
+                                        <col style="width: 8%;" />
+                                        <col style="width: 10%;" />
+                                        <col style="width: 12%;" />
+                                        <col style="width: 10%;" />
+                                        <col style="width: 10%;" />
+                                        <col style="width: 14%;" />
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="@(() => SortByMonoColor("Deck"))">
+                                                    Color
+                                                    @if (currentMonoColorSort == "Deck")
+                                                    {
+                                                        <i class="bi @(monoColorSortAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-sort text-muted"></i>
+                                                    }
+                                                </button>
+                                            </th>
+                                            <th></th>
+                                            <th class="text-center">
+                                                <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="@(() => SortByMonoColor("Plays"))">
+                                                    Plays
+                                                    @if (currentMonoColorSort == "Plays")
+                                                    {
+                                                        <i class="bi @(monoColorSortAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-sort text-muted"></i>
+                                                    }
+                                                </button>
+                                            </th>
+                                            <th class="text-center">
+                                                <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="@(() => SortByMonoColor("WinRate"))">
+                                                    Win Rate
+                                                    @if (currentMonoColorSort == "WinRate")
+                                                    {
+                                                        <i class="bi @(monoColorSortAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-sort text-muted"></i>
+                                                    }
+                                                </button>
+                                            </th>
+                                            <th class="text-center">
+                                                <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="@(() => SortByMonoColor("Wins"))">
+                                                    Wins
+                                                    @if (currentMonoColorSort == "Wins")
+                                                    {
+                                                        <i class="bi @(monoColorSortAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-sort text-muted"></i>
+                                                    }
+                                                </button>
+                                            </th>
+                                            <th class="text-center">
+                                                <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="@(() => SortByMonoColor("Losses"))">
+                                                    Losses
+                                                    @if (currentMonoColorSort == "Losses")
+                                                    {
+                                                        <i class="bi @(monoColorSortAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-sort text-muted"></i>
+                                                    }
+                                                </button>
+                                            </th>
+                                            <th class="text-nowrap">
+                                                <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="@(() => SortByMonoColor("LastPlayed"))">
+                                                    Last Played
+                                                    @if (currentMonoColorSort == "LastPlayed")
+                                                    {
+                                                        <i class="bi @(monoColorSortAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-sort text-muted"></i>
+                                                    }
+                                                </button>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var color in sortedMonoColorStats)
+                                        {
+                                            <tr>
+                                                <td>@color.DeckName</td>
+                                                <td>
+                                                    @if (color.ColorSymbols.Count > 0)
+                                                    {
+                                                        <div class="d-flex align-items-center gap-1" style="min-width: fit-content;">
+                                                            @foreach (var symbol in color.ColorSymbols)
+                                                            {
+                                                                <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                                            }
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </td>
+                                                <td class="text-center">@color.Plays</td>
+                                                <td class="text-center @(Utilities.GetWinRateColorForPlayer(color.WinRate))">@Utilities.FormatWinRate(color.WinRate)</td>
+                                                <td class="text-center text-success">@color.Wins</td>
+                                                <td class="text-center text-danger">@color.Losses</td>
+                                                <td class="text-nowrap">@(color.LastPlayed?.ToString("yyyy-MM-dd") ?? "-")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0">No single-color inclusion data available.</p>
                         }
                     </div>
                 </div>
@@ -515,10 +715,16 @@
     private DeckStats? mostPlayedColorStats;
     private int uniqueDecksCount = 0;
     private DeckStats? mostSuccessfulColorStats;
+    private DeckStats? mostPlayedColorInclusionStats;
+    private DeckStats? mostSuccessfulColorInclusionStats;
     private List<DeckStats> deckStats = new();
     private string currentSort = "Plays";
     private bool sortAscending = false;
     private List<DeckStats> sortedDeckStats = new();
+    private List<DeckStats> monoColorStats = new();
+    private string currentMonoColorSort = "Deck";
+    private bool monoColorSortAscending = true;
+    private List<DeckStats> sortedMonoColorStats = new();
     private List<HeadToHeadStats> headToHeadStats = new();
     private string currentHeadToHeadSort = "Plays";
     private bool headToHeadSortAscending = false;
@@ -565,7 +771,10 @@
             mostPlayedColorStats = null;
             uniqueDecksCount = 0;
             mostSuccessfulColorStats = null;
+            mostPlayedColorInclusionStats = null;
+            mostSuccessfulColorInclusionStats = null;
             deckStats.Clear();
+            monoColorStats.Clear();
             headToHeadStats.Clear();
             opponentDeckStats.Clear();
 
@@ -637,8 +846,36 @@
                 .ThenBy(d => d.DeckName, StringComparer.Ordinal)
                 .FirstOrDefault();
 
+            monoColorStats = DeckStatsService
+                .AggregateMonoColorInclusion(playerColorEntries, entry => entry.Score.IsWinner)
+                .Select(row => new DeckStats
+                {
+                    DeckName = row.ColorIdentityName,
+                    LinkDeckName = row.LinkDeckName,
+                    ColorSymbols = row.ColorSymbols.ToList(),
+                    Plays = row.Plays,
+                    Wins = row.Wins,
+                    Losses = row.Losses,
+                    WinRate = row.WinRate,
+                    LastPlayed = row.LastPlayed
+                })
+                .ToList();
+
+            mostPlayedColorInclusionStats = monoColorStats
+                .OrderByDescending(d => d.Plays)
+                .ThenBy(GetPrimaryColorOrder)
+                .FirstOrDefault();
+
+            mostSuccessfulColorInclusionStats = monoColorStats
+                .Where(d => d.Plays >= 2)
+                .OrderByDescending(d => d.WinRate)
+                .ThenByDescending(d => d.Plays)
+                .ThenBy(GetPrimaryColorOrder)
+                .FirstOrDefault();
+
             // Sort the deck stats based on the current sort criteria
             sortedDeckStats = GetSortedDeckStats(deckStats, currentSort, sortAscending);
+            sortedMonoColorStats = GetSortedDeckStats(monoColorStats, currentMonoColorSort, monoColorSortAscending);
 
             CalculateHeadToHeadStats();
             sortedHeadToHeadStats = GetSortedHeadToHeadStats(headToHeadStats, currentHeadToHeadSort, headToHeadSortAscending);
@@ -681,7 +918,9 @@
     {
         var sorted = column switch
         {
-            "Deck" => sortAscending ? deckStats.OrderBy(d => d.DeckName).ToList() : deckStats.OrderByDescending(d => d.DeckName).ToList(),
+            "Deck" => sortAscending
+                ? deckStats.OrderBy(GetPrimaryColorOrder).ThenBy(d => d.DeckName).ToList()
+                : deckStats.OrderByDescending(GetPrimaryColorOrder).ThenByDescending(d => d.DeckName).ToList(),
             "Plays" => sortAscending ? deckStats.OrderBy(d => d.Plays).ToList() : deckStats.OrderByDescending(d => d.Plays).ToList(),
             "Wins" => sortAscending ? deckStats.OrderBy(d => d.Wins).ToList() : deckStats.OrderByDescending(d => d.Wins).ToList(),
             "Losses" => sortAscending ? deckStats.OrderBy(d => d.Losses).ToList() : deckStats.OrderByDescending(d => d.Losses).ToList(),
@@ -691,6 +930,21 @@
         };
 
         return sorted;
+    }
+
+    private void SortByMonoColor(string column)
+    {
+        if (column == currentMonoColorSort)
+        {
+            monoColorSortAscending = !monoColorSortAscending;
+        }
+        else
+        {
+            currentMonoColorSort = column;
+            monoColorSortAscending = false;
+        }
+
+        sortedMonoColorStats = GetSortedDeckStats(monoColorStats, currentMonoColorSort, monoColorSortAscending);
     }
 
     private void SortByHeadToHead(string column)
@@ -758,6 +1012,12 @@
                 LastPlayed = row.LastPlayed
             })
             .ToList();
+    }
+
+    private static int GetPrimaryColorOrder(DeckStats deck)
+    {
+        var primaryColorKey = deck.ColorSymbols.FirstOrDefault()?.ColorKey;
+        return primaryColorKey is null ? int.MaxValue : ColorIdentityHelper.GetColorOrder(primaryColorKey);
     }
 
     private void CalculateHeadToHeadStats()

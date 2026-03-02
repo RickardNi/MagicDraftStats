@@ -76,13 +76,13 @@
                             <dt class="col-sm-5">Plays</dt>
                             <dd class="col-sm-7">@deckPlayCount (<span class="text-success">@deckWinCount W</span>&nbsp;/&nbsp;<span class="text-danger">@deckLossCount L</span>)</dd>
                             <dt class="col-sm-5">Win Rate</dt>
-                            <dd class="col-sm-7 @GetWinRateClass(overallWinRate)">@FormatNullableWinRate(overallWinRate)</dd>
+                            <dd class="col-sm-7 @Utilities.GetDeckWinRateClass(overallWinRate)">@Utilities.FormatNullableWinRate(overallWinRate)</dd>
                             <dt class="col-sm-5">First Player Win Rate</dt>
-                            <dd class="col-sm-7 @GetWinRateClass(firstPlayerWinRate)">@FormatNullableWinRate(firstPlayerWinRate)</dd>
+                            <dd class="col-sm-7 @Utilities.GetDeckWinRateClass(firstPlayerWinRate)">@Utilities.FormatNullableWinRate(firstPlayerWinRate)</dd>
                             <dt class="col-sm-5">Win Rate When Going Second</dt>
-                            <dd class="col-sm-7 @GetWinRateClass(goingSecondWinRate)">@FormatNullableWinRate(goingSecondWinRate)</dd>
+                            <dd class="col-sm-7 @Utilities.GetDeckWinRateClass(goingSecondWinRate)">@Utilities.FormatNullableWinRate(goingSecondWinRate)</dd>
                             <dt class="col-sm-5">Average Duration</dt>
-                            <dd class="col-sm-7">@FormatAverageDuration(averageDurationMinutes)</dd>
+                            <dd class="col-sm-7">@Utilities.FormatAverageDuration(averageDurationMinutes, "minutes")</dd>
                         </dl>
                         <hr class="my-3" />
                         <dl class="row mb-0">
@@ -406,21 +406,6 @@
     private string GetPointColor(FirstPlayerStats stats)
     {
         return stats.Result == "Wins" ? "#28a745" : "#dc3545";
-    }
-
-    private static string FormatNullableWinRate(double? winRate)
-    {
-        return winRate.HasValue ? Utilities.FormatWinRate(winRate.Value) : "-";
-    }
-
-    private static string GetWinRateClass(double? winRate)
-    {
-        return winRate.HasValue ? Utilities.GetWinRateColorForDeck(winRate.Value) : "text-muted";
-    }
-
-    private static string FormatAverageDuration(double? averageDuration)
-    {
-        return averageDuration.HasValue ? $"{averageDuration.Value:F1} minutes" : "-";
     }
 
     private static DateTime GetPlayDateSortKey(Play play)

@@ -58,13 +58,13 @@
                             <dt class="col-sm-5">Plays</dt>
                             <dd class="col-sm-7">@deckStats.TotalPlays (<span class="text-success">@deckStats.Wins W</span>&nbsp;/&nbsp;<span class="text-danger">@deckStats.Losses L</span>)</dd>
                             <dt class="col-sm-5">Win Rate</dt>
-                            <dd class="col-sm-7 @GetWinRateClass(deckStats.WinRate)">@FormatNullableWinRate(deckStats.WinRate)</dd>
+                            <dd class="col-sm-7 @Utilities.GetDeckWinRateClass(deckStats.WinRate)">@Utilities.FormatNullableWinRate(deckStats.WinRate)</dd>
                             <dt class="col-sm-5">First Player Win Rate</dt>
-                            <dd class="col-sm-7 @GetWinRateClass(firstPlayerWinRate)">@FormatNullableWinRate(firstPlayerWinRate)</dd>
+                            <dd class="col-sm-7 @Utilities.GetDeckWinRateClass(firstPlayerWinRate)">@Utilities.FormatNullableWinRate(firstPlayerWinRate)</dd>
                             <dt class="col-sm-5">Win Rate When Going Second</dt>
-                            <dd class="col-sm-7 @GetWinRateClass(goingSecondWinRate)">@FormatNullableWinRate(goingSecondWinRate)</dd>
+                            <dd class="col-sm-7 @Utilities.GetDeckWinRateClass(goingSecondWinRate)">@Utilities.FormatNullableWinRate(goingSecondWinRate)</dd>
                             <dt class="col-sm-5">Average Duration</dt>
-                            <dd class="col-sm-7">@FormatAverageDuration(averageDuration)</dd>
+                            <dd class="col-sm-7">@Utilities.FormatAverageDuration(averageDuration, "min", requirePositive: true)</dd>
                         </dl>
                         <hr class="my-3" />
                         <dl class="row mb-0">
@@ -102,7 +102,7 @@
                                     {
                                         @mostSuccessfulPlayer.PlayerName
                                     }
-                                    <span class="@GetWinRateClass(mostSuccessfulPlayer.WinRate)">&nbsp;(@Utilities.FormatWinRate(mostSuccessfulPlayer.WinRate))</span>
+                                    <span class="@Utilities.GetDeckWinRateClass(mostSuccessfulPlayer.WinRate)">&nbsp;(@Utilities.FormatWinRate(mostSuccessfulPlayer.WinRate))</span>
                                 }
                                 else
                                 {
@@ -123,7 +123,7 @@
                                     {
                                         @leastSuccessfulPlayer.PlayerName
                                     }
-                                    <span class="@GetWinRateClass(leastSuccessfulPlayer.WinRate)">&nbsp;(@Utilities.FormatWinRate(leastSuccessfulPlayer.WinRate))</span>
+                                    <span class="@Utilities.GetDeckWinRateClass(leastSuccessfulPlayer.WinRate)">&nbsp;(@Utilities.FormatWinRate(leastSuccessfulPlayer.WinRate))</span>
                                 }
                                 else
                                 {
@@ -819,21 +819,6 @@
     private static string BuildPlayScoreKey(Play play, PlayerScore score)
     {
         return $"{play.Date}|{score.PlayerRefId}|{score.Deck.Trim()}";
-    }
-
-    private static string GetWinRateClass(double? winRate)
-    {
-        return winRate.HasValue ? Utilities.GetWinRateColorForDeck(winRate.Value) : "text-muted";
-    }
-
-    private static string FormatNullableWinRate(double? winRate)
-    {
-        return winRate.HasValue ? Utilities.FormatWinRate(winRate.Value) : "-";
-    }
-
-    private static string FormatAverageDuration(double? duration)
-    {
-        return duration.HasValue && duration.Value > 0 ? $"{duration.Value:F1} min" : "-";
     }
 
     private static DateTime GetPlayDateSortKey(Play play)

@@ -41,6 +41,31 @@ namespace MagicDraftStats.Services
                 return winRate.ToString("P1");
         }
 
+        public static string FormatNullableWinRate(double? winRate)
+        {
+            return winRate.HasValue ? FormatWinRate(winRate.Value) : "-";
+        }
+
+        public static string GetDeckWinRateClass(double? winRate)
+        {
+            return winRate.HasValue ? GetWinRateColorForDeck(winRate.Value) : "text-muted";
+        }
+
+        public static string FormatAverageDuration(double? duration, string unitLabel, bool requirePositive = false)
+        {
+            if (!duration.HasValue)
+            {
+                return "-";
+            }
+
+            if (requirePositive && duration.Value <= 0)
+            {
+                return "-";
+            }
+
+            return $"{duration.Value:F1} {unitLabel}";
+        }
+
         public static string GetWinRateColorForDeck(double winRate) => winRate switch
         {
             >= 0.6 => "text-success-dark",
@@ -58,10 +83,5 @@ namespace MagicDraftStats.Services
             >= 0.3 => "text-mediocre",
             _ => "text-danger"
         };
-
-        public static List<string> GetDeckTags(string deckName)
-        {
-            return [];
-        }
     }
 } 

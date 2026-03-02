@@ -52,18 +52,7 @@ else
                         <div class="card-stack mb-3">
                             @foreach (var card in ExpandCards(pile.PrimaryCards))
                             {
-                                <div class="stack-card" data-preview-url="@card.ImageUrl" data-preview-alt="@card.Name" onmouseenter="DeckVisualTooltip.show(event, this)" onmousemove="DeckVisualTooltip.move(event, this)" onmouseleave="DeckVisualTooltip.hide()">
-                                    @if (!string.IsNullOrWhiteSpace(card.ScryfallUrl))
-                                    {
-                                        <a href="@card.ScryfallUrl" target="_blank" rel="noopener" class="text-decoration-none d-block">
-                                            <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="eager" @onload="OnCardImageLoaded" @onerror="OnCardImageLoaded" />
-                                        </a>
-                                    }
-                                    else
-                                    {
-                                        <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="eager" @onload="OnCardImageLoaded" @onerror="OnCardImageLoaded" />
-                                    }
-                                </div>
+                                @RenderStackCard(card)
                             }
                         </div>
                     }
@@ -73,18 +62,7 @@ else
                             <div class="card-stack mb-3">
                                 @foreach (var card in ExpandCards(pile.PrimaryCards))
                                 {
-                                    <div class="stack-card" data-preview-url="@card.ImageUrl" data-preview-alt="@card.Name" onmouseenter="DeckVisualTooltip.show(event, this)" onmousemove="DeckVisualTooltip.move(event, this)" onmouseleave="DeckVisualTooltip.hide()">
-                                        @if (!string.IsNullOrWhiteSpace(card.ScryfallUrl))
-                                        {
-                                            <a href="@card.ScryfallUrl" target="_blank" rel="noopener" class="text-decoration-none d-block">
-                                                <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="eager" @onload="OnCardImageLoaded" @onerror="OnCardImageLoaded" />
-                                            </a>
-                                        }
-                                        else
-                                        {
-                                            <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="eager" @onload="OnCardImageLoaded" @onerror="OnCardImageLoaded" />
-                                        }
-                                    </div>
+                                    @RenderStackCard(card)
                                 }
                             </div>
                         </div>
@@ -100,18 +78,7 @@ else
                     <div class="card-stack">
                         @foreach (var card in ExpandCards(pile.SecondaryCards))
                         {
-                            <div class="stack-card" data-preview-url="@card.ImageUrl" data-preview-alt="@card.Name" onmouseenter="DeckVisualTooltip.show(event, this)" onmousemove="DeckVisualTooltip.move(event, this)" onmouseleave="DeckVisualTooltip.hide()">
-                                @if (!string.IsNullOrWhiteSpace(card.ScryfallUrl))
-                                {
-                                    <a href="@card.ScryfallUrl" target="_blank" rel="noopener" class="text-decoration-none d-block">
-                                        <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="eager" @onload="OnCardImageLoaded" @onerror="OnCardImageLoaded" />
-                                    </a>
-                                }
-                                else
-                                {
-                                    <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="eager" @onload="OnCardImageLoaded" @onerror="OnCardImageLoaded" />
-                                }
-                            </div>
+                            @RenderStackCard(card)
                         }
                     </div>
                 }
@@ -216,6 +183,19 @@ else
 
         return Task.CompletedTask;
     }
+
+    private RenderFragment<DeckCardVisual> RenderStackCard => card => @<div class="stack-card" data-preview-url="@card.ImageUrl" data-preview-alt="@card.Name" onmouseenter="DeckVisualTooltip.show(event, this)" onmousemove="DeckVisualTooltip.move(event, this)" onmouseleave="DeckVisualTooltip.hide()">
+        @if (!string.IsNullOrWhiteSpace(card.ScryfallUrl))
+        {
+            <a href="@card.ScryfallUrl" target="_blank" rel="noopener" class="text-decoration-none d-block">
+                <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="eager" @onload="OnCardImageLoaded" @onerror="OnCardImageLoaded" />
+            </a>
+        }
+        else
+        {
+            <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="eager" @onload="OnCardImageLoaded" @onerror="OnCardImageLoaded" />
+        }
+    </div>;
 
     private static int GetManaBucket(int? manaValue)
     {

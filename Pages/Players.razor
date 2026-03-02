@@ -108,19 +108,6 @@
                                     </button>
                                 </th>
                                 <th class="text-center">
-                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.UniqueDecks)">
-                                        Decks Played
-                                        @if (currentSortColumn == SortColumn.UniqueDecks)
-                                        {
-                                            <i class="bi @(isAscending ? "bi-sort-up" : "bi-sort-down")"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="bi bi-sort text-muted"></i>
-                                        }
-                                    </button>
-                                </th>
-                                <th class="text-center">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Wins)">
                                         Wins
                                         @if (currentSortColumn == SortColumn.Wins)
@@ -199,9 +186,22 @@
                                     </button>
                                 </th>
                                 <th>
-                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.FavouriteDeck)">
-                                        Most Played Deck
-                                        @if (currentSortColumn == SortColumn.FavouriteDeck)
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.FavouriteColorCombination)">
+                                        Most Played Colors
+                                        @if (currentSortColumn == SortColumn.FavouriteColorCombination)
+                                        {
+                                            <i class="bi @(isAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-sort text-muted"></i>
+                                        }
+                                    </button>
+                                </th>
+                                <th>
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.FavouriteColor)">
+                                        Most Played Color
+                                        @if (currentSortColumn == SortColumn.FavouriteColor)
                                         {
                                             <i class="bi @(isAscending ? "bi-sort-up" : "bi-sort-down")"></i>
                                         }
@@ -241,7 +241,6 @@
                                         </NavLink>
                                     </td>
                                     <td class="text-center">@player.GamesPlayed</td>
-                                    <td class="text-center">@player.UniqueDecks</td>
                                     <td class="text-center">
                                         <span class="text-success fw-bold">@player.Wins</span>
                                     </td>
@@ -270,7 +269,32 @@
                                         <span class="fw-bold">@Utilities.FormatWinRate(player.FirstPlayer)</span>
                                     </td>
                                     <td>
-                                        <NavLink class="deck-link" href="@Utilities.GetDeckUrl(player.MostPlayedDeck)">@player.MostPlayedDeck</NavLink> (@player.MostPlayedDeckPlays)
+                                        <div class="d-flex align-items-center gap-1 flex-wrap">
+                                            <span>@player.MostPlayedColorCombinationName</span>
+                                            <span class="text-muted">(@player.MostPlayedColorCombinationPlays)</span>
+                                            <div class="d-inline-flex align-items-center gap-1 ms-2">
+                                                @foreach (var symbol in player.MostPlayedColorCombinationSymbols)
+                                                {
+                                                    <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                                }
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-1 flex-wrap">
+                                            @if (!string.IsNullOrWhiteSpace(player.MostPlayedColorKey))
+                                            {
+                                                <span>@ColorIdentityHelper.GetColorName(player.MostPlayedColorKey)</span>
+                                                <span class="text-muted">(@player.MostPlayedColorPlays)</span>
+                                                <div class="d-inline-flex align-items-center ms-2">
+                                                    <ColorChip ColorKey="@player.MostPlayedColorKey" IsSplash="false" />
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -311,9 +335,11 @@
         public int Wins { get; set; }
         public int Losses { get; set; }
         public double WinRate { get; set; }
-        public int UniqueDecks { get; set; }
-        public string MostPlayedDeck { get; set; } = string.Empty;
-        public int MostPlayedDeckPlays { get; set; }
+        public string MostPlayedColorCombinationName { get; set; } = string.Empty;
+        public List<DeckColorSymbol> MostPlayedColorCombinationSymbols { get; set; } = new();
+        public int MostPlayedColorCombinationPlays { get; set; }
+        public string? MostPlayedColorKey { get; set; }
+        public int MostPlayedColorPlays { get; set; }
         public double FirstPlayerWinRate { get; set; }
         public double SecondPlayerWinRate { get; set; }
         public double FirstPlayer { get; set; }
@@ -324,11 +350,11 @@
         Rank,
         PlayerName,
         GamesPlayed,
-        UniqueDecks,
         Wins,
         Losses,
         WinRate,
-        FavouriteDeck,
+        FavouriteColorCombination,
+        FavouriteColor,
         FirstPlayerWinRate,
         SecondPlayerWinRate,
         FirstPlayer
@@ -391,28 +417,31 @@
             .ToList();
 
         playerStats = playerGroups
-            .Select(g => new PlayerStats
+            .Select(g =>
             {
-                PlayerName = g.Key,
-                PlayerRefId = g.First().PlayerRefId,
-                GamesPlayed = g.Count(),
-                Wins = g.Count(ps => ps.IsWinner),
-                Losses = g.Count(ps => !ps.IsWinner),
-                WinRate = g.Count(ps => ps.IsWinner) / (double)g.Count(),
-                UniqueDecks = g.Select(ps => ps.Deck).Distinct().Count(),
-                MostPlayedDeck = g.GroupBy(ps => ps.Deck)
-                                 .OrderByDescending(dg => dg.Count())
-                                 .First().Key,
-                MostPlayedDeckPlays = g.Count(ps => ps.Deck == g.GroupBy(ps => ps.Deck)
-                                 .OrderByDescending(dg => dg.Count())
-                                 .First().Key),
-                FirstPlayerWinRate = g.Count(ps => ps.IsFirstPlayer) > 0 
-                    ? g.Count(ps => ps.IsWinner && ps.IsFirstPlayer) / (double)g.Count(ps => ps.IsFirstPlayer)
-                    : 0,
-                SecondPlayerWinRate = g.Count(ps => !ps.IsFirstPlayer) > 0 
-                    ? g.Count(ps => ps.IsWinner && !ps.IsFirstPlayer) / (double)g.Count(ps => !ps.IsFirstPlayer)
-                    : 0,
-                FirstPlayer = g.Count(ps => ps.IsFirstPlayer) / (double)g.Count()
+                var mostPlayedColorStats = ColorIdentityHelper.GetMostPlayedColorStats(g);
+
+                return new PlayerStats
+                {
+                    PlayerName = g.Key,
+                    PlayerRefId = g.First().PlayerRefId,
+                    GamesPlayed = g.Count(),
+                    Wins = g.Count(ps => ps.IsWinner),
+                    Losses = g.Count(ps => !ps.IsWinner),
+                    WinRate = g.Count(ps => ps.IsWinner) / (double)g.Count(),
+                    MostPlayedColorCombinationName = mostPlayedColorStats.ColorCombinationName,
+                    MostPlayedColorCombinationSymbols = mostPlayedColorStats.ColorCombinationSymbols,
+                    MostPlayedColorCombinationPlays = mostPlayedColorStats.ColorCombinationPlays,
+                    MostPlayedColorKey = mostPlayedColorStats.ColorKey,
+                    MostPlayedColorPlays = mostPlayedColorStats.ColorPlays,
+                    FirstPlayerWinRate = g.Count(ps => ps.IsFirstPlayer) > 0
+                        ? g.Count(ps => ps.IsWinner && ps.IsFirstPlayer) / (double)g.Count(ps => ps.IsFirstPlayer)
+                        : 0,
+                    SecondPlayerWinRate = g.Count(ps => !ps.IsFirstPlayer) > 0
+                        ? g.Count(ps => ps.IsWinner && !ps.IsFirstPlayer) / (double)g.Count(ps => !ps.IsFirstPlayer)
+                        : 0,
+                    FirstPlayer = g.Count(ps => ps.IsFirstPlayer) / (double)g.Count()
+                };
             })
             .OrderByDescending(p => p.GamesPlayed)
             .ThenByDescending(p => p.WinRate)
@@ -465,10 +494,6 @@
         {
             sortedStats = isAscending ? sortedStats.OrderBy(p => p.GamesPlayed).ToList() : sortedStats.OrderByDescending(p => p.GamesPlayed).ToList();
         }
-        else if (currentSortColumn == SortColumn.UniqueDecks)
-        {
-            sortedStats = isAscending ? sortedStats.OrderBy(p => p.UniqueDecks).ToList() : sortedStats.OrderByDescending(p => p.UniqueDecks).ToList();
-        }
         else if (currentSortColumn == SortColumn.Wins)
         {
             sortedStats = isAscending ? sortedStats.OrderBy(p => p.Wins).ToList() : sortedStats.OrderByDescending(p => p.Wins).ToList();
@@ -481,9 +506,17 @@
         {
             sortedStats = isAscending ? sortedStats.OrderBy(p => p.WinRate).ToList() : sortedStats.OrderByDescending(p => p.WinRate).ToList();
         }
-        else if (currentSortColumn == SortColumn.FavouriteDeck)
+        else if (currentSortColumn == SortColumn.FavouriteColorCombination)
         {
-            sortedStats = isAscending ? sortedStats.OrderBy(p => p.MostPlayedDeck).ToList() : sortedStats.OrderByDescending(p => p.MostPlayedDeck).ToList();
+            sortedStats = isAscending
+                ? sortedStats.OrderBy(p => p.MostPlayedColorCombinationName).ToList()
+                : sortedStats.OrderByDescending(p => p.MostPlayedColorCombinationName).ToList();
+        }
+        else if (currentSortColumn == SortColumn.FavouriteColor)
+        {
+            sortedStats = isAscending
+                ? sortedStats.OrderBy(p => p.MostPlayedColorKey).ThenBy(p => p.PlayerName).ToList()
+                : sortedStats.OrderByDescending(p => p.MostPlayedColorKey).ThenBy(p => p.PlayerName).ToList();
         }
         else if (currentSortColumn == SortColumn.FirstPlayerWinRate)
         {
@@ -500,7 +533,7 @@
 
         // Recalculate ranks based on current sort order and direction
         // For ascending sorts, we need to invert the rank logic for most columns
-        if (currentSortColumn == SortColumn.PlayerName || currentSortColumn == SortColumn.FavouriteDeck)
+        if (currentSortColumn == SortColumn.PlayerName || currentSortColumn == SortColumn.FavouriteColorCombination || currentSortColumn == SortColumn.FavouriteColor)
         {
             // For these columns, rank follows the display order
             return sortedStats.Select((p, index) => { p.Rank = index + 1; return p; }).ToList();

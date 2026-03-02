@@ -10,15 +10,12 @@
 <div class="container mt-2 mt-md-4">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
         <h1><i class="bi bi-clock me-4 d-none d-md-inline"></i>Duration</h1>
-        <div class="text-muted mt-1 mt-md-0">
-            Showing @deckStats.Count color combinations
-        </div>
     </div>
 
     @if (isLoading)
     {
         <div class="alert alert-info">
-            <i class="bi bi-arrow-clockwise spin me-2"></i>Loading color combination duration statistics...
+            <i class="bi bi-arrow-clockwise spin me-2"></i>Loading duration statistics...
         </div>
     }
     else if (errorMessage != null)
@@ -30,7 +27,7 @@
     else if (!deckStats.Any())
     {
         <div class="alert alert-warning">
-            <i class="bi bi-exclamation-triangle me-2"></i>No color combinations found.
+            <i class="bi bi-exclamation-triangle me-2"></i>No duration statistics found.
         </div>
     }
     else
@@ -59,7 +56,7 @@
                         @if (fastestDeck != null)
                         {
                             <p>
-                                <strong>Fastest Color Combination:</strong>
+                                <strong>Fastest Colors:</strong>
                                 <span class="d-inline-flex align-items-center gap-1 flex-wrap">
                                     <NavLink class="deck-link" href="@Utilities.GetDeckUrl(fastestDeck.LinkDeckName)">@fastestDeck.DeckName</NavLink>
                                     @if (fastestDeck.ColorSymbols.Count > 0)
@@ -78,7 +75,7 @@
                         @if (slowestDeck != null)
                         {
                             <p>
-                                <strong>Slowest Color Combination:</strong>
+                                <strong>Slowest Colors:</strong>
                                 <span class="d-inline-flex align-items-center gap-1 flex-wrap">
                                     <NavLink class="deck-link" href="@Utilities.GetDeckUrl(slowestDeck.LinkDeckName)">@slowestDeck.DeckName</NavLink>
                                     @if (slowestDeck.ColorSymbols.Count > 0)
@@ -136,7 +133,7 @@
                         @if (fastestWinDeck != null)
                         {
                             <p>
-                                <strong>Fastest Color Combination When Winning:</strong>
+                                <strong>Fastest Colors When Winning:</strong>
                                 <span class="d-inline-flex align-items-center gap-1 flex-wrap">
                                     <NavLink class="deck-link" href="@Utilities.GetDeckUrl(fastestWinDeck.LinkDeckName)">@fastestWinDeck.DeckName</NavLink>
                                     @if (fastestWinDeck.ColorSymbols.Count > 0)
@@ -155,7 +152,7 @@
                         @if (slowestWinDeck != null)
                         {
                             <p>
-                                <strong>Slowest Color Combination When Winning:</strong>
+                                <strong>Slowest Colors When Winning:</strong>
                                 <span class="d-inline-flex align-items-center gap-1 flex-wrap">
                                     <NavLink class="deck-link" href="@Utilities.GetDeckUrl(slowestWinDeck.LinkDeckName)">@slowestWinDeck.DeckName</NavLink>
                                     @if (slowestWinDeck.ColorSymbols.Count > 0)

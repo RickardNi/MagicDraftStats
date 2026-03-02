@@ -3,6 +3,12 @@ using System.Text.RegularExpressions;
 namespace MagicDraftStats.Models;
 
 public record DeckColorSymbol(string ColorKey, bool IsSplash);
+public record MostPlayedColorStats(
+    string ColorCombinationName,
+    List<DeckColorSymbol> ColorCombinationSymbols,
+    int ColorCombinationPlays,
+    string? ColorKey,
+    int ColorPlays);
 
 public static class ColorIdentityHelper
 {
@@ -120,6 +126,48 @@ public static class ColorIdentityHelper
             "RG" => "Gruul",
             _ => pair
         };
+    }
+
+    public static string BuildColorIdentityKey(IReadOnlyList<string> colorIdentityKeys)
+    {
+        return colorIdentityKeys.Count == 0 ? "Colorless" : string.Concat(colorIdentityKeys);
+    }
+
+    public static MostPlayedColorStats GetMostPlayedColorStats(IEnumerable<PlayerScore> playerScores)
+    {
+        var playerEntries = playerScores
+            .Select(score => new
+            {
+                ColorIdentityKeys = GetRoleColorIdentityKeys(score.Deck)
+            })
+            .ToList();
+
+        if (playerEntries.Count == 0)
+        {
+            return new MostPlayedColorStats("Colorless", [], 0, null, 0);
+        }
+
+        var favoriteColorCombination = playerEntries
+            .GroupBy(entry => BuildColorIdentityKey(entry.ColorIdentityKeys))
+            .OrderByDescending(group => group.Count())
+            .ThenBy(group => group.Key, StringComparer.Ordinal)
+            .First();
+
+        var favoriteColorCombinationKeys = favoriteColorCombination.First().ColorIdentityKeys;
+
+        var favoriteColor = playerEntries
+            .SelectMany(entry => entry.ColorIdentityKeys)
+            .GroupBy(color => color)
+            .OrderByDescending(group => group.Count())
+            .ThenBy(group => GetColorOrder(group.Key))
+            .FirstOrDefault();
+
+        return new MostPlayedColorStats(
+            GetColorIdentityName(favoriteColorCombinationKeys),
+            favoriteColorCombinationKeys.Select(color => new DeckColorSymbol(color, false)).ToList(),
+            favoriteColorCombination.Count(),
+            favoriteColor?.Key,
+            favoriteColor?.Count() ?? 0);
     }
 
     private static IEnumerable<string> MapRoleTokenToColorKeys(string token)

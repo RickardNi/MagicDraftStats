@@ -145,7 +145,7 @@
                                     <th>Plays</th>
                                     <th>Wins</th>
                                     <th>Win Rate</th>
-                                    <th>Most Played Color Combination</th>
+                                    <th>Most Played Colors</th>
                                     <th>Most Played Color</th>
                                 </tr>
                             </thead>
@@ -156,28 +156,7 @@
                                         .GroupBy(ps => new { ps.PlayerName, ps.PlayerRefId })
                                         .Select(g =>
                                         {
-                                            var playerEntries = g
-                                                .Select(score => new
-                                                {
-                                                    Score = score,
-                                                    ColorIdentityKeys = ColorIdentityHelper.GetRoleColorIdentityKeys(score.Deck)
-                                                })
-                                                .ToList();
-
-                                            var favouriteColorCombination = playerEntries
-                                                .GroupBy(entry => BuildColorIdentityKey(entry.ColorIdentityKeys))
-                                                .OrderByDescending(group => group.Count())
-                                                .ThenBy(group => group.Key, StringComparer.Ordinal)
-                                                .First();
-
-                                            var favouriteColorCombinationKeys = favouriteColorCombination.First().ColorIdentityKeys;
-
-                                            var favouriteColor = playerEntries
-                                                .SelectMany(entry => entry.ColorIdentityKeys)
-                                                .GroupBy(color => color)
-                                                .OrderByDescending(group => group.Count())
-                                                .ThenBy(group => ColorIdentityHelper.GetColorOrder(group.Key))
-                                                .FirstOrDefault();
+                                            var mostPlayedColorStats = ColorIdentityHelper.GetMostPlayedColorStats(g);
 
                                             return new
                                             {
@@ -186,11 +165,11 @@
                                                 GamesPlayed = g.Count(),
                                                 Wins = g.Count(ps => ps.IsWinner),
                                                 WinRate = g.Count(ps => ps.IsWinner) / (double)g.Count(),
-                                                FavouriteColorCombinationName = ColorIdentityHelper.GetColorIdentityName(favouriteColorCombinationKeys),
-                                                FavouriteColorCombinationSymbols = favouriteColorCombinationKeys.Select(color => new DeckColorSymbol(color, false)).ToList(),
-                                                FavouriteColorCombinationPlays = favouriteColorCombination.Count(),
-                                                FavouriteColorKey = favouriteColor?.Key,
-                                                FavouriteColorPlays = favouriteColor?.Count() ?? 0
+                                                FavouriteColorCombinationName = mostPlayedColorStats.ColorCombinationName,
+                                                FavouriteColorCombinationSymbols = mostPlayedColorStats.ColorCombinationSymbols,
+                                                FavouriteColorCombinationPlays = mostPlayedColorStats.ColorCombinationPlays,
+                                                FavouriteColorKey = mostPlayedColorStats.ColorKey,
+                                                FavouriteColorPlays = mostPlayedColorStats.ColorPlays
                                             };
                                         })
                                         .OrderByDescending(p => p.GamesPlayed)
@@ -409,10 +388,5 @@
         currentPage = page;
         UpdateCurrentPagePlays();
         return Task.CompletedTask;
-    }
-
-    private static string BuildColorIdentityKey(IReadOnlyList<string> colorIdentityKeys)
-    {
-        return colorIdentityKeys.Count == 0 ? "Colorless" : string.Concat(colorIdentityKeys);
     }
 }

@@ -1,5 +1,6 @@
 @using MagicDraftStats.Models
 @using MagicDraftStats.Services
+@using System.Text.RegularExpressions
 
 @if (Plays == null || !Plays.Any())
 {
@@ -39,19 +40,37 @@ else
                             }
                         </td>
                         <td>
-                            @if (!string.IsNullOrWhiteSpace(winner?.Deck))
+                            @if (winner != null)
                             {
-                                <NavLink class="deck-link text-success fw-bold" href="@Utilities.GetDeckUrl(winner.Deck)">@winner.Deck</NavLink>
+                                <NavLink class="player-link text-success fw-bold" href="@Utilities.GetPlayerUrl(winner.PlayerRefId)">@winner.PlayerName</NavLink>
+                            }
+                            else
+                            {
+                                <span class="text-muted">No winner</span>
                             }
                         </td>
                         <td>
                             @if (winner != null)
                             {
-                                <NavLink class="player-link text-success" href="@Utilities.GetPlayerUrl(winner.PlayerRefId)">@winner.PlayerName</NavLink>
+                                var winnerColorSymbols = GetRoleColorSymbols(winner.Deck);
+
+                                @if (winnerColorSymbols.Count > 0)
+                                {
+                                    <div class="d-flex align-items-center gap-1" style="min-width: fit-content;">
+                                        @foreach (var symbol in winnerColorSymbols)
+                                        {
+                                            <ColorChip ColorKey="@symbol.ColorKey" />
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
                             }
                             else
                             {
-                                <span class="text-muted">No winner</span>
+                                <span class="text-muted">-</span>
                             }
                         </td>
                         <td class="flag-icon-column">
@@ -61,19 +80,37 @@ else
                             }
                         </td>
                         <td>
-                            @if (!string.IsNullOrWhiteSpace(loser?.Deck))
+                            @if (loser != null)
                             {
-                                <NavLink class="deck-link text-danger fw-bold" href="@Utilities.GetDeckUrl(loser.Deck)">@loser.Deck</NavLink>
+                                <NavLink class="player-link text-danger fw-bold" href="@Utilities.GetPlayerUrl(loser.PlayerRefId)">@loser.PlayerName</NavLink>
+                            }
+                            else
+                            {
+                                <span class="text-muted">No loser</span>
                             }
                         </td>
                         <td>
                             @if (loser != null)
                             {
-                                <NavLink class="player-link text-danger" href="@Utilities.GetPlayerUrl(loser.PlayerRefId)">@loser.PlayerName</NavLink>
+                                var loserColorSymbols = GetRoleColorSymbols(loser.Deck);
+
+                                @if (loserColorSymbols.Count > 0)
+                                {
+                                    <div class="d-flex align-items-center gap-1" style="min-width: fit-content;">
+                                        @foreach (var symbol in loserColorSymbols)
+                                        {
+                                            <ColorChip ColorKey="@symbol.ColorKey" />
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
                             }
                             else
                             {
-                                <span class="text-muted">No loser</span>
+                                <span class="text-muted">-</span>
                             }
                         </td>
                     </tr>
@@ -84,6 +121,86 @@ else
 }
 
 @code {
+    private static readonly Dictionary<string, string> ColorNameToKey = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["White"] = "W",
+        ["Blue"] = "U",
+        ["Black"] = "B",
+        ["Red"] = "R",
+        ["Green"] = "G"
+    };
+
+    private static readonly Dictionary<string, int> ColorOrder = new(StringComparer.Ordinal)
+    {
+        ["W"] = 0,
+        ["U"] = 1,
+        ["B"] = 2,
+        ["R"] = 3,
+        ["G"] = 4
+    };
+
     [Parameter]
     public List<Play> Plays { get; set; } = new();
+
+    private static List<DeckColorSymbol> GetRoleColorSymbols(string? role)
+    {
+        if (string.IsNullOrWhiteSpace(role))
+        {
+            return [];
+        }
+
+        var colorKeys = role
+            .Split(['／', '/'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(MapRoleTokenToColorKey)
+            .Where(key => key is not null)
+            .Cast<string>()
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(GetColorOrder)
+            .ToList();
+
+        if (colorKeys.Count == 0)
+        {
+            colorKeys = ColorNameToKey
+                .Where(entry => Regex.IsMatch(role, $@"\b{Regex.Escape(entry.Key)}\b", RegexOptions.IgnoreCase))
+                .Select(entry => entry.Value)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(GetColorOrder)
+                .ToList();
+        }
+
+        return colorKeys
+            .Select(key => new DeckColorSymbol(key, false))
+            .ToList();
+    }
+
+    private static string? MapRoleTokenToColorKey(string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return null;
+        }
+
+        token = token.Trim();
+
+        if (token.Length == 1)
+        {
+            var upper = token.ToUpperInvariant();
+            if (upper is "W" or "U" or "B" or "R" or "G")
+            {
+                return upper;
+            }
+        }
+
+        if (ColorNameToKey.TryGetValue(token, out var colorKey))
+        {
+            return colorKey;
+        }
+
+        return null;
+    }
+
+    private static int GetColorOrder(string colorKey)
+    {
+        return ColorOrder.TryGetValue(colorKey, out var order) ? order : int.MaxValue;
+    }
 } 

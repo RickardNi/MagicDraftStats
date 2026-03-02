@@ -85,7 +85,7 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <p><strong>Total Drafts:</strong> @plays.Count</p>
+                        <p><strong>Total Plays:</strong> @plays.Count</p>
                         <p><strong>Total Players:</strong> @(plays.Any() ? plays.SelectMany(p => p.PlayerScores).Select(ps => ps.PlayerName).Distinct().Count() : 0)</p>
                         <hr />
                         @if (plays.Any())

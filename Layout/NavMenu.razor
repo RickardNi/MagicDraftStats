@@ -1,4 +1,6 @@
 ﻿@using MagicDraftStats.Services
+@inject IBGStatsImportService BGStatsService
+@inject IGlobalFilterService GlobalFilterService
 
 <nav class="nav-bar-links d-flex align-items-center w-100">
     <NavLink class="nav-link" href="" Match="NavLinkMatch.All" title="Dashboard">
@@ -39,6 +41,67 @@
                     <span class="bi bi-journal-text me-2" aria-hidden="true"></span>Rules
                 </NavLink>
             </li>
+            @if (availableSets.Any())
+            {
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                    <h6 class="dropdown-header d-flex align-items-center">
+                        <span class="bi bi-box me-2" aria-hidden="true"></span>Set Filters
+                    </h6>
+                </li>
+                @foreach (var setVariant in availableSets)
+                {
+                    var checkboxId = $"set-{setVariant.Replace(" ", "-").ToLower()}";
+                    <li class="px-3 py-1">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox"
+                                   id="@checkboxId" 
+                                   checked="@GlobalFilterService.IsSetSelected(setVariant)"
+                                   @onchange="(e) => OnSetFilterChanged(setVariant, e.Value)" />
+                            <label class="form-check-label small" for="@checkboxId">
+                                @setVariant
+                            </label>
+                        </div>
+                    </li>
+                }
+
+                <li class="px-3 py-1">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox"
+                               id="set-undefined"
+                               checked="@GlobalFilterService.IncludeUndefinedSets"
+                               @onchange="(e) => OnIncludeUndefinedSetsChanged(e.Value)" />
+                        <label class="form-check-label small" for="set-undefined">
+                            Undefined
+                        </label>
+                    </div>
+                </li>
+            }
+
+            @if (availableVariantTokens.Any())
+            {
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                    <h6 class="dropdown-header d-flex align-items-center">
+                        <span class="bi bi-funnel me-2" aria-hidden="true"></span>Variant Filters
+                    </h6>
+                </li>
+                @foreach (var variant in availableVariantTokens)
+                {
+                    var checkboxId = $"variant-{variant.Replace(" ", "-").ToLower()}";
+                    <li class="px-3 py-1">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox"
+                                   id="@checkboxId"
+                                   checked="@GlobalFilterService.IsVariantSelected(variant)"
+                                   @onchange="(e) => OnVariantFilterChanged(variant, e.Value)" />
+                            <label class="form-check-label small" for="@checkboxId">
+                                @variant
+                            </label>
+                        </div>
+                    </li>
+                }
+            }
             <li><hr class="dropdown-divider" /></li>
             <li>
                 <a class="dropdown-item d-flex align-items-center" href="https://github.com/RickardNi/MagicDraftStats" target="_blank" rel="noopener noreferrer">
@@ -49,3 +112,63 @@
     </div>
 </nav>
 
+@code {
+    private List<string> availableSets = [];
+    private List<string> availableVariantTokens = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var currentData = await BGStatsService.GetCurrentDataAsync();
+        var allPlays = currentData?.Plays ?? [];
+
+        availableSets = VariantDefinitions.SetVariants
+            .OrderBy(v => v)
+            .ToList();
+
+        availableVariantTokens = allPlays
+            .SelectMany(p => VariantDefinitions.SplitVariantTokens(p.Variant))
+            .Where(token => !token.Equals(VariantDefinitions.RequiredVariant, StringComparison.OrdinalIgnoreCase))
+            .Where(token => !VariantDefinitions.SetVariants.Contains(token))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(v => v)
+            .ToList();
+    }
+
+    private void OnVariantFilterChanged(string variant, object? isChecked)
+    {
+        var selectedVariants = new HashSet<string>(GlobalFilterService.SelectedVariants);
+        
+        if (isChecked is bool checkedValue && checkedValue)
+        {
+            selectedVariants.Add(variant);
+        }
+        else
+        {
+            selectedVariants.Remove(variant);
+        }
+        
+        GlobalFilterService.SetVariantFilter(selectedVariants);
+    }
+
+    private void OnSetFilterChanged(string setVariant, object? isChecked)
+    {
+        var selectedSets = new HashSet<string>(GlobalFilterService.SelectedSets, StringComparer.OrdinalIgnoreCase);
+
+        if (isChecked is bool checkedValue && checkedValue)
+        {
+            selectedSets.Add(setVariant);
+        }
+        else
+        {
+            selectedSets.Remove(setVariant);
+        }
+
+        GlobalFilterService.SetSetFilter(selectedSets);
+    }
+
+    private void OnIncludeUndefinedSetsChanged(object? isChecked)
+    {
+        var includeUndefinedSets = isChecked is bool checkedValue && checkedValue;
+        GlobalFilterService.SetIncludeUndefinedSets(includeUndefinedSets);
+    }
+}

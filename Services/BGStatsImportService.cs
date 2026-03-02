@@ -41,7 +41,15 @@ public class BGStatsImportService(HttpClient httpClient, ILogger<BGStatsImportSe
                 return [];
             }
 
-            var filteredPlays = _cachedData.Plays.Where(p => variantFilter == null || variantFilter.Contains(p.Variant)).ToList();
+            var selectedVariants = variantFilter ?? _globalFilterService.SelectedVariants;
+            var selectedSets = _globalFilterService.SelectedSets;
+            var includeUndefinedSets = _globalFilterService.IncludeUndefinedSets;
+
+            var filteredPlays = _cachedData.Plays
+                .Where(p => IsPlayIncludedBySetFilters(p, selectedSets, includeUndefinedSets))
+                .Where(p => IsPlayIncludedByVariantFilters(p, selectedVariants))
+                .ToList();
+
             return filteredPlays;
         }
         finally
@@ -274,9 +282,13 @@ public class BGStatsImportService(HttpClient httpClient, ILogger<BGStatsImportSe
                 playCountBeforeIgnoredFilter - _cachedData.Plays.Count, _cachedData.Plays.Count);
         }
 
-        // Keep only Draft plays
+        // Keep only plays with an explicit Draft token
         var playCountBeforeDraftFilter = _cachedData.Plays.Count;
-        _cachedData.Plays = [.. _cachedData.Plays.Where(p => p.Variant.Contains("Draft", StringComparison.OrdinalIgnoreCase))];
+        _cachedData.Plays =
+        [
+            .. _cachedData.Plays.Where(p => VariantDefinitions.SplitVariantTokens(p.Variant)
+                .Contains(VariantDefinitions.RequiredVariant, StringComparer.OrdinalIgnoreCase))
+        ];
 
         if (playCountBeforeDraftFilter - _cachedData.Plays.Count > 0)
         {
@@ -345,11 +357,45 @@ public class BGStatsImportService(HttpClient httpClient, ILogger<BGStatsImportSe
         if (_cachedData == null)
             return;
 
-        var allVariants = _cachedData.Plays
-            .Select(p => p.Variant)
+        var allVariantTokens = _cachedData.Plays
+            .SelectMany(p => VariantDefinitions.SplitVariantTokens(p.Variant))
+            .Where(token => !token.Equals(VariantDefinitions.RequiredVariant, StringComparison.OrdinalIgnoreCase))
+            .Where(token => !VariantDefinitions.SetVariants.Contains(token))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        _globalFilterService.SetAllAvailableVariants(allVariants);
+        _globalFilterService.SetAllAvailableVariants(allVariantTokens);
+        _globalFilterService.SetAllAvailableSets(VariantDefinitions.SetVariants);
+        _globalFilterService.SetIncludeUndefinedSets(false);
+    }
+
+    private static bool IsPlayIncludedBySetFilters(Play play, HashSet<string> selectedSets, bool includeUndefinedSets)
+    {
+        var tokens = VariantDefinitions.SplitVariantTokens(play.Variant).ToList();
+
+        var setTokens = tokens
+            .Where(token => VariantDefinitions.SetVariants.Contains(token))
+            .ToList();
+
+        if (!setTokens.Any())
+            return includeUndefinedSets;
+
+        return setTokens.Any(selectedSets.Contains);
+    }
+
+    private static bool IsPlayIncludedByVariantFilters(Play play, HashSet<string> selectedVariants)
+    {
+        if (selectedVariants.Count == 0)
+            return false;
+
+        var variantTokens = VariantDefinitions.SplitVariantTokens(play.Variant)
+            .Where(token => !token.Equals(VariantDefinitions.RequiredVariant, StringComparison.OrdinalIgnoreCase))
+            .Where(token => !VariantDefinitions.SetVariants.Contains(token))
+            .ToList();
+
+        if (variantTokens.Count == 0)
+            return false;
+
+        return variantTokens.Any(selectedVariants.Contains);
     }
 }

@@ -128,12 +128,12 @@ else
 
     private string GetPlayerWeightClass(Play play, PlayerScore score)
     {
-        if (HighlightScoreKeys is { Count: > 0 })
+        if (HighlightScoreKeys != null)
         {
             return HighlightScoreKeys.Contains(BuildPlayScoreKey(play, score)) ? "fw-bold" : string.Empty;
         }
 
-        return "fw-bold";
+        return string.Empty;
     }
 
     private static string BuildPlayScoreKey(Play play, PlayerScore score)

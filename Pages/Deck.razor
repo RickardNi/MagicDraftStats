@@ -188,7 +188,7 @@
 
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="card-title mb-0"><i class="bi bi-list-ul"></i>Plays with This Deck</h5>
+                <h5 class="card-title mb-0"><i class="bi bi-list-ul"></i>Plays</h5>
             </div>
             <div class="card-body">
                 @if (deckPlays.Any())
@@ -294,7 +294,9 @@
             playerName = bgStatsData?.Players?.FirstOrDefault(player => player.Id == deckFile.PlayerRefId)?.Name ?? $"Player #{deckFile.PlayerRefId}";
             var deckStats = DeckStatsService.CalculateDeckStats(deckFile, bgStatsData?.Plays ?? []);
 
-            deckPlays = deckStats.MatchedPlays.ToList();
+            deckPlays = deckStats.MatchedPlays
+                .OrderByDescending(GetPlayDateSortKey)
+                .ToList();
             highlightedDeckScoreKeys = BuildHighlightedDeckScoreKeys(deckFile, deckPlays);
             deckPlayCount = deckStats.Plays;
             deckWinCount = deckStats.Wins;
@@ -419,6 +421,11 @@
     private static string FormatAverageDuration(double? averageDuration)
     {
         return averageDuration.HasValue ? $"{averageDuration.Value:F1} minutes" : "-";
+    }
+
+    private static DateTime GetPlayDateSortKey(Play play)
+    {
+        return DateTime.TryParse(play.Date, out var parsedDate) ? parsedDate : DateTime.MinValue;
     }
 
     private HashSet<string> BuildHighlightedDeckScoreKeys(DeckFile deck, IEnumerable<Play> plays)

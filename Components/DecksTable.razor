@@ -113,7 +113,10 @@ else
                 {
                     <tr style="cursor: pointer;" @onclick="() => OpenDeck(deck.DeckId)">
                         <td>
-                            <NavLink class="deck-link" href="@($"deck/{Uri.EscapeDataString(deck.DeckId)}")" @onclick:stopPropagation="true">@deck.DeckName</NavLink>
+                            <div class="d-flex align-items-center gap-2" style="min-width: fit-content;">
+                                <NavLink class="deck-link" href="@($"deck/{Uri.EscapeDataString(deck.DeckId)}")" @onclick:stopPropagation="true">@deck.DeckName</NavLink>
+                                <TagBadges ShowWinner="@(deck.Rank == 1)" />
+                            </div>
                         </td>
                         <td>
                             @if (deck.ColorSymbols.Count > 0)

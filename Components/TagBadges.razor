@@ -1,0 +1,16 @@
+@if (ShowWinner)
+{
+    <div class="@ContainerClass d-flex align-items-center">
+        <span class="badge bg-warning text-dark d-inline-flex align-items-center justify-content-center p-1 lh-1" aria-label="Winner" title="Winner">
+            <i class="bi bi-trophy-fill"></i>
+        </span>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public bool ShowWinner { get; set; }
+
+    [Parameter]
+    public string ContainerClass { get; set; } = "";
+}

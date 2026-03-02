@@ -20,7 +20,14 @@ else if (errorMessage != null)
 }
 else
 {
-    <div class="deck-visual-columns d-flex align-items-start gap-3 flex-nowrap pb-2">
+    @if (!areImagesReady)
+    {
+        <div class="alert alert-info mb-2">
+            <i class="bi bi-arrow-clockwise spin me-2"></i>Loading card images...
+        </div>
+    }
+
+    <div class="deck-visual-columns d-flex align-items-start gap-3 flex-nowrap pb-2 @(areImagesReady ? string.Empty : "deck-visual-preload")">
         @foreach (var pile in manaPiles)
         {
             <div class="deck-visual-column d-flex flex-column">
@@ -46,12 +53,12 @@ else
                                     @if (!string.IsNullOrWhiteSpace(card.ScryfallUrl))
                                     {
                                         <a href="@card.ScryfallUrl" target="_blank" rel="noopener" class="text-decoration-none d-block">
-                                            <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="lazy" />
+                                            <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="eager" @onload="OnCardImageLoaded" @onerror="OnCardImageLoaded" />
                                         </a>
                                     }
                                     else
                                     {
-                                        <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="lazy" />
+                                        <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="eager" @onload="OnCardImageLoaded" @onerror="OnCardImageLoaded" />
                                     }
                                 </div>
                             }
@@ -67,12 +74,12 @@ else
                                         @if (!string.IsNullOrWhiteSpace(card.ScryfallUrl))
                                         {
                                             <a href="@card.ScryfallUrl" target="_blank" rel="noopener" class="text-decoration-none d-block">
-                                                <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="lazy" />
+                                                <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="eager" @onload="OnCardImageLoaded" @onerror="OnCardImageLoaded" />
                                             </a>
                                         }
                                         else
                                         {
-                                            <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="lazy" />
+                                            <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="eager" @onload="OnCardImageLoaded" @onerror="OnCardImageLoaded" />
                                         }
                                     </div>
                                 }
@@ -94,12 +101,12 @@ else
                                 @if (!string.IsNullOrWhiteSpace(card.ScryfallUrl))
                                 {
                                     <a href="@card.ScryfallUrl" target="_blank" rel="noopener" class="text-decoration-none d-block">
-                                        <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="lazy" />
+                                        <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="eager" @onload="OnCardImageLoaded" @onerror="OnCardImageLoaded" />
                                     </a>
                                 }
                                 else
                                 {
-                                    <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="lazy" />
+                                    <img src="@card.ImageUrl" alt="@card.Name" class="img-fluid rounded-3 shadow-sm" loading="eager" @onload="OnCardImageLoaded" @onerror="OnCardImageLoaded" />
                                 }
                             </div>
                         }
@@ -118,6 +125,9 @@ else
     private string? errorMessage;
     private List<ManaPile> manaPiles = new();
     private int maxPrimaryStackCount = 0;
+    private int totalImageCount = 0;
+    private int loadedImageCount = 0;
+    private bool areImagesReady = false;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -130,6 +140,9 @@ else
         {
             manaPiles = new();
             maxPrimaryStackCount = 0;
+            totalImageCount = 0;
+            loadedImageCount = 0;
+            areImagesReady = true;
             isLoading = false;
             errorMessage = null;
             return;
@@ -139,6 +152,13 @@ else
         {
             isLoading = true;
             errorMessage = null;
+            areImagesReady = false;
+            totalImageCount = 0;
+            loadedImageCount = 0;
+            manaPiles = new();
+            maxPrimaryStackCount = 0;
+
+            await InvokeAsync(StateHasChanged);
 
             var visuals = await ScryfallCardService.GetDeckCardVisualsAsync(Cards, "fdn");
             var nonLands = visuals.Where(card => !card.IsLand).ToList();
@@ -184,17 +204,42 @@ else
                 .Select(pile => ExpandCards(pile.PrimaryCards).Count())
                 .DefaultIfEmpty(0)
                 .Max();
+
+            totalImageCount = groupedNonLands
+                .Sum(pile => ExpandCards(pile.PrimaryCards).Count() + ExpandCards(pile.SecondaryCards).Count());
+            loadedImageCount = 0;
+            areImagesReady = totalImageCount == 0;
         }
         catch (Exception ex)
         {
             errorMessage = $"Could not load card visuals: {ex.Message}";
             manaPiles = new();
             maxPrimaryStackCount = 0;
+            totalImageCount = 0;
+            loadedImageCount = 0;
+            areImagesReady = true;
         }
         finally
         {
             isLoading = false;
         }
+    }
+
+    private Task OnCardImageLoaded()
+    {
+        if (areImagesReady || totalImageCount <= 0)
+        {
+            return Task.CompletedTask;
+        }
+
+        loadedImageCount++;
+        if (loadedImageCount >= totalImageCount)
+        {
+            areImagesReady = true;
+            return InvokeAsync(StateHasChanged);
+        }
+
+        return Task.CompletedTask;
     }
 
     private static int GetManaBucket(int? manaValue)

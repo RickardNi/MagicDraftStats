@@ -8,7 +8,19 @@
 
 <div class="container mt-4">
     <div>
-        <h1><i class="bi bi-file-bar-graph-fill me-4"></i><span class="fw-bold">@displayDeckName</span></h1>
+        <h1 class="d-flex align-items-center gap-2 flex-wrap">
+            <i class="bi bi-layers-fill me-2"></i>
+            <span class="fw-bold">@displayDeckTitle</span>
+            @if (deckColorSymbols.Any())
+            {
+                <span class="d-inline-flex align-items-center gap-1">
+                    @foreach (var symbol in deckColorSymbols)
+                    {
+                        <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                    }
+                </span>
+            }
+        </h1>
     </div>
 
     @if (isLoading)
@@ -166,7 +178,8 @@
     private bool isLoading = true;
     private string? errorMessage;
     private DeckFile? deckFile;
-    private string displayDeckName = "-";
+    private string displayDeckTitle = "-";
+    private List<DeckColorSymbol> deckColorSymbols = new();
     private string playerName = "-";
     private int playerId = 0;
 
@@ -192,10 +205,13 @@
             isLoading = true;
             errorMessage = null;
             deckFile = null;
-            displayDeckName = "-";
+            displayDeckTitle = "-";
+            deckColorSymbols = new();
             playerName = "-";
             playerId = 0;
             deckPlays.Clear();
+
+            await InvokeAsync(StateHasChanged);
 
             var decodedDeckId = Uri.UnescapeDataString(deckId ?? string.Empty).Trim();
             var normalizedDeckId = Path.GetFileNameWithoutExtension(decodedDeckId);
@@ -220,7 +236,9 @@
             var bgStatsData = await BGStatsService.GetCurrentDataAsync();
             playerName = bgStatsData?.Players?.FirstOrDefault(player => player.Id == deckFile.PlayerRefId)?.Name ?? $"Player #{deckFile.PlayerRefId}";
             var dateText = deckFile.Date?.ToString("yyyy-MM-dd") ?? Path.GetFileNameWithoutExtension(deckItem.FilePath);
-            displayDeckName = $"{dateText} - {playerName}";
+            var colorIdentityName = FoundationsCardCatalog.GetDeckColorIdentityName(deckFile.Cards);
+            displayDeckTitle = $"[{dateText}] {colorIdentityName}";
+            deckColorSymbols = FoundationsCardCatalog.GetDeckColorIdentitySymbols(deckFile.Cards).ToList();
 
             firstPlayerStats = new List<FirstPlayerStats>
             {

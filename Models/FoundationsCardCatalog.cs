@@ -24,36 +24,12 @@ public static partial class FoundationsCardCatalog
     {
         var colorCounts = new Dictionary<string, int>(StringComparer.Ordinal);
         var colorCardCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+        var orderedColors = GetOrderedDeckColors(cards, colorCounts, colorCardCounts, sortByWeight: true);
 
-        foreach (var card in cards.Where(card => card.Count > 0))
-        {
-            if (!TryGetMetadata(card.Name, out var metadata))
-            {
-                continue;
-            }
-
-            foreach (var color in metadata.ColorIdentity.Distinct(StringComparer.Ordinal))
-            {
-                colorCounts[color] = colorCounts.TryGetValue(color, out var count)
-                    ? count + card.Count
-                    : card.Count;
-
-                colorCardCounts[color] = colorCardCounts.TryGetValue(color, out var colorCardCount)
-                    ? colorCardCount + 1
-                    : 1;
-            }
-        }
-
-        if (colorCounts.Count == 0)
+        if (orderedColors.Count == 0)
         {
             return "Colorless";
         }
-
-        var orderedColors = colorCounts
-            .OrderByDescending(entry => entry.Value)
-            .ThenBy(entry => GetColorOrder(entry.Key))
-            .Select(entry => entry.Key)
-            .ToList();
 
         if (orderedColors.Count == 1)
         {
@@ -75,6 +51,72 @@ public static partial class FoundationsCardCatalog
         }
 
         return string.Concat(orderedColors);
+    }
+
+    public static IReadOnlyList<string> GetDeckColorIdentityKeys(IEnumerable<CardEntry> cards)
+    {
+        return GetOrderedDeckColors(cards, null, null, sortByWeight: false);
+    }
+
+    public static IReadOnlyList<DeckColorSymbol> GetDeckColorIdentitySymbols(IEnumerable<CardEntry> cards)
+    {
+        var colorCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+        var colorCardCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+        var orderedColors = GetOrderedDeckColors(cards, colorCounts, colorCardCounts, sortByWeight: false);
+        var hasSplashCandidates = orderedColors.Count >= 3;
+
+        return orderedColors
+            .Select(color => new DeckColorSymbol(
+                color,
+                hasSplashCandidates
+                && colorCardCounts.TryGetValue(color, out var colorCardCount)
+                && colorCardCount == 1))
+            .OrderBy(symbol => symbol.IsSplash ? 1 : 0)
+            .ThenBy(symbol => GetColorOrder(symbol.ColorKey))
+            .ToList();
+    }
+
+    private static List<string> GetOrderedDeckColors(
+        IEnumerable<CardEntry> cards,
+        Dictionary<string, int>? colorCounts,
+        Dictionary<string, int>? colorCardCounts,
+        bool sortByWeight)
+    {
+        colorCounts ??= new Dictionary<string, int>(StringComparer.Ordinal);
+        colorCardCounts ??= new Dictionary<string, int>(StringComparer.Ordinal);
+
+        foreach (var card in cards.Where(card => card.Count > 0))
+        {
+            if (!TryGetMetadata(card.Name, out var metadata))
+            {
+                continue;
+            }
+
+            foreach (var color in metadata.ColorIdentity.Distinct(StringComparer.Ordinal))
+            {
+                colorCounts[color] = colorCounts.TryGetValue(color, out var count)
+                    ? count + card.Count
+                    : card.Count;
+
+                colorCardCounts[color] = colorCardCounts.TryGetValue(color, out var colorCardCount)
+                    ? colorCardCount + 1
+                    : 1;
+            }
+        }
+
+        if (sortByWeight)
+        {
+            return colorCounts
+                .OrderByDescending(entry => entry.Value)
+                .ThenBy(entry => GetColorOrder(entry.Key))
+                .Select(entry => entry.Key)
+                .ToList();
+        }
+
+        return colorCounts
+            .OrderBy(entry => GetColorOrder(entry.Key))
+            .Select(entry => entry.Key)
+            .ToList();
     }
 
     private static int GetColorOrder(string color) => color switch
@@ -126,6 +168,7 @@ public static partial class FoundationsCardCatalog
 }
 
 public record FoundationsCardMetadata(int ManaValue, string[] Types, string[] ColorIdentity);
+public record DeckColorSymbol(string ColorKey, bool IsSplash);
 
 public static partial class FoundationsCardCatalog
 {

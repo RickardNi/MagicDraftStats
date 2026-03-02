@@ -145,7 +145,8 @@
                                     <th>Plays</th>
                                     <th>Wins</th>
                                     <th>Win Rate</th>
-                                    <th>Most Played Deck</th>
+                                    <th>Most Played Color Combination</th>
+                                    <th>Most Played Color</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -153,19 +154,44 @@
                                     var playerStats = plays
                                         .SelectMany(p => p.PlayerScores)
                                         .GroupBy(ps => new { ps.PlayerName, ps.PlayerRefId })
-                                        .Select(g => new
+                                        .Select(g =>
                                         {
-                                            PlayerName = g.Key.PlayerName,
-                                            PlayerRefId = g.Key.PlayerRefId,
-                                            GamesPlayed = g.Count(),
-                                            Wins = g.Count(ps => ps.IsWinner),
-                                            WinRate = g.Count(ps => ps.IsWinner) / (double)g.Count(),
-                                            FavouriteDeck = g.GroupBy(ps => ps.Deck)
-                                                             .OrderByDescending(dg => dg.Count())
-                                                             .First().Key,
-                                            FavouriteDeckPlays = g.GroupBy(ps => ps.Deck)
-                                                                  .OrderByDescending(dg => dg.Count())
-                                                                  .First().Count()
+                                            var playerEntries = g
+                                                .Select(score => new
+                                                {
+                                                    Score = score,
+                                                    ColorIdentityKeys = ColorIdentityHelper.GetRoleColorIdentityKeys(score.Deck)
+                                                })
+                                                .ToList();
+
+                                            var favouriteColorCombination = playerEntries
+                                                .GroupBy(entry => BuildColorIdentityKey(entry.ColorIdentityKeys))
+                                                .OrderByDescending(group => group.Count())
+                                                .ThenBy(group => group.Key, StringComparer.Ordinal)
+                                                .First();
+
+                                            var favouriteColorCombinationKeys = favouriteColorCombination.First().ColorIdentityKeys;
+
+                                            var favouriteColor = playerEntries
+                                                .SelectMany(entry => entry.ColorIdentityKeys)
+                                                .GroupBy(color => color)
+                                                .OrderByDescending(group => group.Count())
+                                                .ThenBy(group => ColorIdentityHelper.GetColorOrder(group.Key))
+                                                .FirstOrDefault();
+
+                                            return new
+                                            {
+                                                PlayerName = g.Key.PlayerName,
+                                                PlayerRefId = g.Key.PlayerRefId,
+                                                GamesPlayed = g.Count(),
+                                                Wins = g.Count(ps => ps.IsWinner),
+                                                WinRate = g.Count(ps => ps.IsWinner) / (double)g.Count(),
+                                                FavouriteColorCombinationName = ColorIdentityHelper.GetColorIdentityName(favouriteColorCombinationKeys),
+                                                FavouriteColorCombinationSymbols = favouriteColorCombinationKeys.Select(color => new DeckColorSymbol(color, false)).ToList(),
+                                                FavouriteColorCombinationPlays = favouriteColorCombination.Count(),
+                                                FavouriteColorKey = favouriteColor?.Key,
+                                                FavouriteColorPlays = favouriteColor?.Count() ?? 0
+                                            };
                                         })
                                         .OrderByDescending(p => p.GamesPlayed)
                                         .Take(10)
@@ -204,7 +230,32 @@
                                                 <span class="fw-bold @Utilities.GetWinRateColorForPlayer(player.WinRate)">@Utilities.FormatWinRate(player.WinRate)</span>
                                             </td>
                                             <td>
-                                                <NavLink class="deck-link" href="@Utilities.GetDeckUrl(player.FavouriteDeck)">@player.FavouriteDeck</NavLink> (@player.FavouriteDeckPlays)
+                                                <div class="d-flex align-items-center gap-1 flex-wrap">
+                                                    <span>@player.FavouriteColorCombinationName</span>
+                                                    <span class="text-muted">(@player.FavouriteColorCombinationPlays)</span>
+                                                    <div class="d-inline-flex align-items-center gap-1 ms-2">
+                                                        @foreach (var symbol in player.FavouriteColorCombinationSymbols)
+                                                        {
+                                                            <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-1 flex-wrap">
+                                                    @if (!string.IsNullOrWhiteSpace(player.FavouriteColorKey))
+                                                    {
+                                                        <span>@ColorIdentityHelper.GetColorName(player.FavouriteColorKey)</span>
+                                                        <span class="text-muted">(@player.FavouriteColorPlays)</span>
+                                                        <div class="d-inline-flex align-items-center ms-2">
+                                                            <ColorChip ColorKey="@player.FavouriteColorKey" IsSplash="false" />
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </div>
                                             </td>
                                         </tr>
                                     }
@@ -358,5 +409,10 @@
         currentPage = page;
         UpdateCurrentPagePlays();
         return Task.CompletedTask;
+    }
+
+    private static string BuildColorIdentityKey(IReadOnlyList<string> colorIdentityKeys)
+    {
+        return colorIdentityKeys.Count == 0 ? "Colorless" : string.Concat(colorIdentityKeys);
     }
 }

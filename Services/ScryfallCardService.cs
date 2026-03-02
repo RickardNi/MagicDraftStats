@@ -14,7 +14,8 @@ public class DeckCardVisual
 {
     public string Name { get; set; } = string.Empty;
     public int Count { get; set; }
-    public decimal? ManaValue { get; set; }
+    public int? ManaValue { get; set; }
+    public string[] ColorIdentity { get; set; } = [];
     public bool IsLand { get; set; }
     public bool IsBasicLand { get; set; }
     public bool IsCreature { get; set; }
@@ -53,6 +54,12 @@ public class ScryfallCardService(HttpClient httpClient, ILogger<ScryfallCardServ
 
         var fetchTasks = entries.Select(async entry =>
         {
+            if (string.Equals(setCode, "fdn", StringComparison.OrdinalIgnoreCase)
+                && FoundationsCardCatalog.TryGetMetadata(entry.Name, out var metadata))
+            {
+                return MapToDeckCardVisualFromCatalog(entry.Name, entry.Count, metadata, setCode);
+            }
+
             var card = await GetCardByNameAsync(entry.Name, setCode);
             return MapToDeckCardVisual(entry.Name, entry.Count, card, setCode);
         });
@@ -61,7 +68,7 @@ public class ScryfallCardService(HttpClient httpClient, ILogger<ScryfallCardServ
 
         return results
             .OrderBy(card => card.IsLand)
-            .ThenBy(card => card.ManaValue ?? decimal.MaxValue)
+            .ThenBy(card => card.ManaValue ?? int.MaxValue)
             .ThenBy(card => card.Name)
             .ToList();
     }
@@ -140,9 +147,8 @@ public class ScryfallCardService(HttpClient httpClient, ILogger<ScryfallCardServ
 
     private static DeckCardVisual MapToDeckCardVisual(string name, int count, ScryfallCard? card, string setCode)
     {
-        var imageUrl = card?.ImageUris?.Normal
-            ?? card?.CardFaces?.FirstOrDefault(face => !string.IsNullOrWhiteSpace(face.ImageUris?.Normal))?.ImageUris?.Normal
-            ?? $"https://api.scryfall.com/cards/named?exact={Uri.EscapeDataString(name)}&set={setCode}&format=image";
+        var imageUrl = GetImageUrl(name, setCode, card);
+        var scryfallUrl = GetScryfallUrl(name, setCode, card?.ScryfallUri);
 
         var typeLine = card?.TypeLine ?? string.Empty;
         var isLand = typeLine.Contains("Land", StringComparison.OrdinalIgnoreCase);
@@ -150,19 +156,78 @@ public class ScryfallCardService(HttpClient httpClient, ILogger<ScryfallCardServ
             && typeLine.Contains("Land", StringComparison.OrdinalIgnoreCase);
         var isCreature = typeLine.Contains("Creature", StringComparison.OrdinalIgnoreCase);
         var isPlaneswalker = typeLine.Contains("Planeswalker", StringComparison.OrdinalIgnoreCase);
+        var colorIdentity = card?.ColorIdentity?.ToArray() ?? [];
 
         return new DeckCardVisual
         {
             Name = name,
             Count = count,
-            ManaValue = card?.Cmc,
+            ManaValue = card != null ? (int)Math.Round(card.Cmc, MidpointRounding.AwayFromZero) : null,
+            ColorIdentity = colorIdentity,
             IsLand = isLand,
             IsBasicLand = isBasicLand,
             IsCreature = isCreature,
             IsPlaneswalker = isPlaneswalker,
             ImageUrl = imageUrl,
-            ScryfallUrl = card?.ScryfallUri
+            ScryfallUrl = scryfallUrl
         };
+    }
+
+    private static DeckCardVisual MapToDeckCardVisualFromCatalog(string name, int count, FoundationsCardMetadata metadata, string setCode)
+    {
+        var isLand = HasType(metadata.Types, "Land");
+        var isBasicLand = HasType(metadata.Types, "Basic") && isLand;
+        var isCreature = HasType(metadata.Types, "Creature");
+        var isPlaneswalker = HasType(metadata.Types, "Planeswalker");
+
+        return new DeckCardVisual
+        {
+            Name = name,
+            Count = count,
+            ManaValue = metadata.ManaValue,
+            ColorIdentity = metadata.ColorIdentity,
+            IsLand = isLand,
+            IsBasicLand = isBasicLand,
+            IsCreature = isCreature,
+            IsPlaneswalker = isPlaneswalker,
+            ImageUrl = GetImageUrl(name, setCode, null),
+            ScryfallUrl = GetScryfallUrl(name, setCode, null)
+        };
+    }
+
+    private static string GetImageUrl(string name, string setCode, ScryfallCard? card)
+    {
+        if (FullArtPlaneswalkerCollectorNumbers.TryGetValue(name, out var collectorNumber))
+        {
+            return $"https://api.scryfall.com/cards/{setCode}/{collectorNumber}?format=image&version=normal";
+        }
+
+        return card?.ImageUris?.Normal
+               ?? card?.CardFaces?.FirstOrDefault(face => !string.IsNullOrWhiteSpace(face.ImageUris?.Normal))?.ImageUris?.Normal
+               ?? $"https://api.scryfall.com/cards/named?exact={Uri.EscapeDataString(name)}&set={setCode}&format=image";
+    }
+
+    private static string GetScryfallUrl(string name, string setCode, string? fromApi)
+    {
+        if (FullArtPlaneswalkerCollectorNumbers.TryGetValue(name, out var collectorNumber))
+        {
+            return $"https://scryfall.com/card/{setCode}/{collectorNumber}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(fromApi))
+        {
+            return fromApi;
+        }
+
+        var query = Uri.EscapeDataString($"!\"{name}\" set:{setCode}");
+        return $"https://scryfall.com/search?q={query}";
+    }
+
+    private static bool HasType(IEnumerable<string> types, string typeName)
+    {
+        return types.Any(type =>
+            type.Equals(typeName, StringComparison.OrdinalIgnoreCase)
+            || type.Split(' ', StringSplitOptions.RemoveEmptyEntries).Any(token => token.Equals(typeName, StringComparison.OrdinalIgnoreCase)));
     }
 
     private class ScryfallCard
@@ -178,6 +243,9 @@ public class ScryfallCardService(HttpClient httpClient, ILogger<ScryfallCardServ
 
         [JsonPropertyName("scryfall_uri")]
         public string? ScryfallUri { get; set; }
+
+        [JsonPropertyName("color_identity")]
+        public List<string>? ColorIdentity { get; set; }
 
         [JsonPropertyName("image_uris")]
         public ScryfallImageUris? ImageUris { get; set; }

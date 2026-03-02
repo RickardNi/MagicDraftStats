@@ -197,20 +197,20 @@ else
         }
     }
 
-    private static int GetManaBucket(decimal? manaValue)
+    private static int GetManaBucket(int? manaValue)
     {
         if (!manaValue.HasValue)
         {
             return int.MaxValue;
         }
 
-        var mana = Math.Max(0, (int)manaValue.Value);
+        var mana = Math.Max(0, manaValue.Value);
         return mana >= 6 ? 6 : mana;
     }
 
-    private static decimal GetManaSortValue(decimal? manaValue)
+    private static int GetManaSortValue(int? manaValue)
     {
-        return manaValue ?? decimal.MaxValue;
+        return manaValue ?? int.MaxValue;
     }
 
     private string GetPrimarySlotStyle()

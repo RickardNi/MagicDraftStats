@@ -2,6 +2,7 @@
   "playerRefId": 2,
   "date": "2026-02-11",
   "rank": 1,
+  "playerCount": 4,
   "deckSize": 40,
   "cards": [
     { "name": "Healer's Hawk", "count": 2 },

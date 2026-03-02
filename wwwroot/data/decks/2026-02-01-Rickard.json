@@ -2,6 +2,7 @@
   "playerRefId": 2,
   "date": "2026-02-01",
   "rank": 1,
+  "playerCount": 2,
   "deckSize": 40,
   "cards": [
     { "name": "Dragonmaster Outcast", "count": 1 },
@@ -28,13 +29,13 @@
     { "name": "Celestial Armor", "count": 1 },
     { "name": "Involuntary Employment", "count": 1 },
     { "name": "Valkyrie's Call", "count": 1 },
-	{ "name": "Mountain", "count": 7 },
-	{ "name": "Plains", "count": 8 },
+    { "name": "Mountain", "count": 7 },
+    { "name": "Plains", "count": 8 },
     { "name": "Boros Guildgate", "count": 1 }
   ],
   "sideboard": [
     { "name": "Rapacious Dragon", "count": 1 },
-	{ "name": "Fumigate", "count": 1 },
-	{ "name": "Sire of Seven Deaths", "count": 1 }
+    { "name": "Fumigate", "count": 1 },
+    { "name": "Sire of Seven Deaths", "count": 1 }
   ]
 }

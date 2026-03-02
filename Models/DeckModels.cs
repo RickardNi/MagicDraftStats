@@ -14,7 +14,10 @@ public class DeckFile
     public List<DateOnly> AdditionalDates { get; set; } = [];
 
     [JsonPropertyName("rank")]
-    public int? Rank { get; set; }
+    public int Rank { get; set; }
+
+    [JsonPropertyName("playerCount")]
+    public int PlayerCount { get; set; }
 
     [JsonPropertyName("deckSize")]
     public int DeckSize { get; set; }

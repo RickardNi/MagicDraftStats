@@ -2,6 +2,7 @@
   "playerRefId": 2,
   "date": "2026-01-29",
   "rank": 1,
+  "playerCount": 4,
   "deckSize": 40,
   "cards": [
     { "name": "Abyssal Harvester", "count": 1 },
@@ -27,8 +28,8 @@
     { "name": "Tragic Banshee", "count": 1 },
     { "name": "Valkyrie's Call", "count": 1 },
     { "name": "Youthful Valkyrie", "count": 1 },
-	{ "name": "Plains", "count": 8 },
-	{ "name": "Swamp", "count": 8 },
-	{ "name": "Temple of Silence", "count": 1 }
+    { "name": "Plains", "count": 8 },
+    { "name": "Swamp", "count": 8 },
+    { "name": "Temple of Silence", "count": 1 }
   ]
 }

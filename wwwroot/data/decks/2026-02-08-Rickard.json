@@ -2,6 +2,7 @@
   "playerRefId": 2,
   "date": "2026-02-08",
   "rank": 1,
+  "playerCount": 2,
   "deckSize": 40,
   "cards": [
     { "name": "Leonin Vanguard", "count": 1 },

@@ -3,6 +3,7 @@
   "date": "2026-02-23",
   "additionalDates": ["2026-02-24", "2026-02-25", "2026-02-26"],
   "rank": 2,
+  "playerCount": 2,
   "deckSize": 40,
   "cards": [
     { "name": "Spectral Sailor", "count": 1 },

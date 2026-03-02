@@ -2,6 +2,7 @@
   "playerRefId": 3,
   "date": "2026-02-06",
   "rank": 1,
+  "playerCount": 2,
   "deckSize": 40,
   "cards": [
     { "name": "Llanowar Elves", "count": 1 },

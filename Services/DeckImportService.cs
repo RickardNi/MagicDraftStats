@@ -158,12 +158,20 @@ public class DeckImportService(HttpClient httpClient, ILogger<DeckImportService>
                 $"playerRefId {deck.PlayerRefId} does not exist in BGStats players."));
         }
 
-        if (!deck.Rank.HasValue || deck.Rank.Value <= 0)
+        if (deck.Rank <= 0)
         {
             messages.Add(new DeckValidationMessage(
                 DeckValidationSeverity.Error,
                 "RANK_REQUIRED",
                 "The 'rank' field is required and must be greater than 0."));
+        }
+
+        if (deck.PlayerCount <= 0)
+        {
+            messages.Add(new DeckValidationMessage(
+                DeckValidationSeverity.Error,
+                "PLAYER_COUNT_REQUIRED",
+                "The 'playerCount' field is required and must be greater than 0."));
         }
 
         if (!deck.Date.HasValue)

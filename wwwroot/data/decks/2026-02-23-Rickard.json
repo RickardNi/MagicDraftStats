@@ -3,6 +3,7 @@
   "date": "2026-02-23",
   "additionalDates": ["2026-02-24", "2026-02-25", "2026-02-26"],
   "rank": 1,
+  "playerCount": 2,
   "deckSize": 40,
   "cards": [
     { "name": "Three Tree Mascot", "count": 1 },
@@ -11,7 +12,7 @@
     { "name": "Gatekeeper of Malakir", "count": 1 },
     { "name": "Nessian Hornbeetle", "count": 1 },
     { "name": "Vengeful Bloodwitch", "count": 1 },
-	{ "name": "Nine-Lives Familiar", "count": 1 },
+    { "name": "Nine-Lives Familiar", "count": 1 },
     { "name": "Loot, Exuberant Explorer", "count": 1 },
     { "name": "Springbloom Druid", "count": 1 },
     { "name": "Predator Ooze", "count": 1 },

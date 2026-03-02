@@ -2,6 +2,7 @@
   "playerRefId": 2,
   "date": "2026-02-16",
   "rank": 2,
+  "playerCount": 4,
   "deckSize": 40,
   "cards": [
     { "name": "Mild-Mannered Librarian", "count": 1 },

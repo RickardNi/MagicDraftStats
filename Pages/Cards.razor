@@ -336,11 +336,8 @@
                             aggregate.WinnerDeckCount++;
                         }
 
-                        if (deck.Rank.HasValue)
-                        {
-                            aggregate.RankSum += deck.Rank.Value;
-                            aggregate.RankCount++;
-                        }
+                        aggregate.RankSum += deck.Rank;
+                        aggregate.RankCount++;
                     }
                 }
             }

@@ -1,0 +1,13 @@
+.deck-title-mana-symbols {
+    align-self: center;
+}
+
+.deck-title-mana-symbols .mana-symbol {
+    width: 25px;
+    height: 25px;
+}
+
+.deck-title-mana-symbols .mana-symbol-splash {
+    width: 18px;
+    height: 18px;
+}

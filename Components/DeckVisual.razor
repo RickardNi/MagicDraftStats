@@ -31,20 +31,23 @@ else
         @foreach (var pile in manaPiles)
         {
             <div class="deck-visual-column d-flex flex-column">
-                <h6 class="fw-bold mb-2 text-center">
-                    @if (pile.IsLands)
-                    {
-                        <span>Lands</span>
-                    }
-                    else
-                    {
-                        <span>@pile.Label</span>
-                    }
-                </h6>
+                @if (!IsSideboard)
+                {
+                    <h6 class="fw-bold mb-2 text-center">
+                        @if (pile.IsLands)
+                        {
+                            <span>Lands</span>
+                        }
+                        else
+                        {
+                            <span>@pile.Label</span>
+                        }
+                    </h6>
+                }
 
                 @if (pile.PrimaryCards.Any())
                 {
-                    @if (pile.IsLands)
+                    @if (IsSideboard || pile.IsLands)
                     {
                         <div class="card-stack mb-3">
                             @foreach (var card in ExpandCards(pile.PrimaryCards))
@@ -87,12 +90,12 @@ else
                         </div>
                     }
                 }
-                else if (!pile.IsLands)
+                else if (!IsSideboard && !pile.IsLands)
                 {
                     <div class="primary-stack-slot" style="@GetPrimarySlotStyle()"></div>
                 }
 
-                @if (pile.SecondaryCards.Any())
+                @if (!IsSideboard && pile.SecondaryCards.Any())
                 {
                     <div class="card-stack">
                         @foreach (var card in ExpandCards(pile.SecondaryCards))
@@ -120,6 +123,9 @@ else
 @code {
     [Parameter]
     public List<CardEntry> Cards { get; set; } = new();
+
+    [Parameter]
+    public bool IsSideboard { get; set; }
 
     private bool isLoading = true;
     private string? errorMessage;
@@ -161,51 +167,20 @@ else
             await InvokeAsync(StateHasChanged);
 
             var visuals = await ScryfallCardService.GetDeckCardVisualsAsync(Cards, "fdn");
-            var nonLands = visuals.Where(card => !card.IsLand).ToList();
-            var lands = visuals.Where(card => card.IsLand).ToList();
 
-            var groupedNonLands = nonLands
-                .GroupBy(card => GetManaBucket(card.ManaValue))
-                .OrderBy(group => group.Key)
-                .Select(group => new ManaPile
-                {
-                    Label = group.Key == int.MaxValue ? "?" : (group.Key == 6 ? "6+" : group.Key.ToString()),
-                    IsLands = false,
-                    PrimaryCards = group
-                        .Where(card => card.IsCreature || card.IsPlaneswalker)
-                        .OrderBy(card => GetManaSortValue(card.ManaValue))
-                        .ThenBy(card => card.Name)
-                        .ToList(),
-                    SecondaryCards = group
-                        .Where(card => !card.IsCreature && !card.IsPlaneswalker)
-                        .OrderBy(card => GetManaSortValue(card.ManaValue))
-                        .ThenBy(card => card.Name)
-                        .ToList()
-                })
-                .ToList();
+            manaPiles = IsSideboard
+                ? BuildSideboardPiles(visuals)
+                : BuildDeckPiles(visuals);
 
-            if (lands.Any())
-            {
-                groupedNonLands.Add(new ManaPile
-                {
-                    Label = "Lands",
-                    IsLands = true,
-                    PrimaryCards = lands
-                        .OrderByDescending(card => card.IsBasicLand)
-                        .ThenBy(card => card.Name)
-                        .ToList(),
-                    SecondaryCards = new List<DeckCardVisual>()
-                });
-            }
+            maxPrimaryStackCount = IsSideboard
+                ? 0
+                : manaPiles
+                    .Where(pile => !pile.IsLands)
+                    .Select(pile => ExpandCards(pile.PrimaryCards).Count())
+                    .DefaultIfEmpty(0)
+                    .Max();
 
-            manaPiles = groupedNonLands;
-            maxPrimaryStackCount = groupedNonLands
-                .Where(pile => !pile.IsLands)
-                .Select(pile => ExpandCards(pile.PrimaryCards).Count())
-                .DefaultIfEmpty(0)
-                .Max();
-
-            totalImageCount = groupedNonLands
+            totalImageCount = manaPiles
                 .Sum(pile => ExpandCards(pile.PrimaryCards).Count() + ExpandCards(pile.SecondaryCards).Count());
             loadedImageCount = 0;
             areImagesReady = totalImageCount == 0;
@@ -256,6 +231,106 @@ else
     private static int GetManaSortValue(int? manaValue)
     {
         return manaValue ?? int.MaxValue;
+    }
+
+    private static List<ManaPile> BuildDeckPiles(List<DeckCardVisual> visuals)
+    {
+        var nonLands = visuals.Where(card => !card.IsLand).ToList();
+        var lands = visuals.Where(card => card.IsLand).ToList();
+
+        var groupedNonLands = nonLands
+            .GroupBy(card => GetManaBucket(card.ManaValue))
+            .OrderBy(group => group.Key)
+            .Select(group => new ManaPile
+            {
+                Label = group.Key == int.MaxValue ? "?" : (group.Key == 6 ? "6+" : group.Key.ToString()),
+                IsLands = false,
+                PrimaryCards = group
+                    .Where(card => card.IsCreature || card.IsPlaneswalker)
+                    .OrderBy(card => GetManaSortValue(card.ManaValue))
+                    .ThenBy(card => card.Name)
+                    .ToList(),
+                SecondaryCards = group
+                    .Where(card => !card.IsCreature && !card.IsPlaneswalker)
+                    .OrderBy(card => GetManaSortValue(card.ManaValue))
+                    .ThenBy(card => card.Name)
+                    .ToList()
+            })
+            .ToList();
+
+        if (lands.Any())
+        {
+            groupedNonLands.Add(new ManaPile
+            {
+                Label = "Lands",
+                IsLands = true,
+                PrimaryCards = lands
+                    .OrderByDescending(card => card.IsBasicLand)
+                    .ThenBy(card => card.Name)
+                    .ToList(),
+                SecondaryCards = new List<DeckCardVisual>()
+            });
+        }
+
+        return groupedNonLands;
+    }
+
+    private static List<ManaPile> BuildSideboardPiles(List<DeckCardVisual> visuals)
+    {
+        var creatureAndPlaneswalkerCards = visuals
+            .Where(card => card.IsCreature || card.IsPlaneswalker)
+            .OrderBy(card => GetManaSortValue(card.ManaValue))
+            .ThenBy(card => card.Name)
+            .ToList();
+
+        var otherSpellCards = visuals
+            .Where(card => !card.IsLand && !card.IsCreature && !card.IsPlaneswalker)
+            .OrderBy(card => GetManaSortValue(card.ManaValue))
+            .ThenBy(card => card.Name)
+            .ToList();
+
+        var landCards = visuals
+            .Where(card => card.IsLand)
+            .OrderBy(card => GetManaSortValue(card.ManaValue))
+            .ThenBy(card => card.Name)
+            .ToList();
+
+        var piles = new List<ManaPile>();
+
+        if (creatureAndPlaneswalkerCards.Any())
+        {
+            piles.Add(new ManaPile
+            {
+                Label = string.Empty,
+                IsLands = false,
+                PrimaryCards = creatureAndPlaneswalkerCards,
+                SecondaryCards = new List<DeckCardVisual>()
+            });
+        }
+
+        if (otherSpellCards.Any())
+        {
+            piles.Add(new ManaPile
+            {
+                Label = string.Empty,
+                IsLands = false,
+                PrimaryCards = otherSpellCards,
+                SecondaryCards = new List<DeckCardVisual>()
+            });
+        }
+
+        if (landCards.Any())
+        {
+            piles.Add(new ManaPile
+            {
+                Label = string.Empty,
+                IsLands = true,
+                PrimaryCards = landCards,
+                SecondaryCards = new List<DeckCardVisual>()
+            });
+        }
+
+        return piles;
     }
 
     private string GetPrimarySlotStyle()

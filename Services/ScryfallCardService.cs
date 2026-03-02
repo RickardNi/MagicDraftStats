@@ -184,8 +184,8 @@ public class ScryfallCardService(HttpClient httpClient, ILogger<ScryfallCardServ
         {
             Name = name,
             Count = count,
-            ManaValue = metadata.ManaValue,
-            ColorIdentity = metadata.ColorIdentity,
+            ManaValue = FoundationsCardCatalog.GetManaValueFromManaCost(metadata.ManaCost),
+            ColorIdentity = FoundationsCardCatalog.GetColorIdentityFromManaCost(metadata.ManaCost).ToArray(),
             IsLand = isLand,
             IsBasicLand = isBasicLand,
             IsCreature = isCreature,

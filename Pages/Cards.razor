@@ -53,7 +53,7 @@
             <div id="cardsFiltersCollapse" class="collapse">
                 <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-12 col-lg-4">
+                    <div class="col-12 col-lg-3">
                         <label class="form-label fw-bold mb-2">Colors</label>
                         <div class="d-flex flex-column gap-1">
                             @foreach (var color in colorFilterOrder)
@@ -72,7 +72,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-12 col-lg-8">
+                    <div class="col-12 col-lg-6">
                         <label class="form-label fw-bold mb-2">Types</label>
                         <div class="row row-cols-1 row-cols-md-2 g-1">
                             @foreach (var type in availableTypeFilters)
@@ -90,6 +90,25 @@
                             <div class="btn-group btn-group-sm" role="group" aria-label="Type filter actions">
                                 <button class="btn btn-outline-primary" @onclick="SelectAllTypes">Select All</button>
                                 <button class="btn btn-outline-secondary" @onclick="ClearAllTypes">Clear All</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-3">
+                        <label class="form-label fw-bold mb-2">Rarity</label>
+                        <div class="d-flex flex-column gap-1">
+                            @foreach (var rarity in rarityFilterOrder)
+                            {
+                                var checkboxId = $"cards-filter-rarity-{rarity.ToString().ToLowerInvariant()}";
+                                <div class="form-check form-switch mb-0">
+                                    <input class="form-check-input" type="checkbox" id="@checkboxId" checked="@selectedRarityFilters.Contains(rarity)" @onchange="(e) => OnRarityFilterChanged(rarity, e.Value)" />
+                                    <label class="form-check-label" for="@checkboxId">@GetRarityFilterLabel(rarity)</label>
+                                </div>
+                            }
+                        </div>
+                        <div class="mt-3">
+                            <div class="btn-group btn-group-sm" role="group" aria-label="Rarity filter actions">
+                                <button class="btn btn-outline-primary" @onclick="SelectAllRarities">Select All</button>
+                                <button class="btn btn-outline-secondary" @onclick="ClearAllRarities">Clear All</button>
                             </div>
                         </div>
                     </div>
@@ -123,10 +142,16 @@
                                         @SortIcon(SortColumn.Type)
                                     </button>
                                 </th>
-                                <th>
+                                <th class="text-center">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Color)">
                                         Color
                                         @SortIcon(SortColumn.Color)
+                                    </button>
+                                </th>
+                                <th class="text-center">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Rarity)">
+                                        Rarity
+                                        @SortIcon(SortColumn.Rarity)
                                     </button>
                                 </th>
                                 <th class="text-center">
@@ -186,10 +211,10 @@
                                             <span class="text-muted">-</span>
                                         }
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         @if (card.ColorSymbols.Count > 0)
                                         {
-                                            <div class="d-flex align-items-center gap-1" style="min-width: fit-content;">
+                                            <div class="d-flex align-items-center justify-content-center gap-1" style="min-width: fit-content;">
                                                 @foreach (var symbol in card.ColorSymbols)
                                                 {
                                                     <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
@@ -201,6 +226,7 @@
                                             <span class="text-muted">-</span>
                                         }
                                     </td>
+                                    <td class="text-center">@FoundationsCardCatalog.GetRarityShortLabel(card.Rarity)</td>
                                     <td class="text-center">@card.DeckCount</td>
                                     <td class="text-center">@FormatPercent(card.PlayedPercent)</td>
                                     <td class="text-center"><span class="fw-bold text-success-dark">@card.WinnerDeckCount</span></td>
@@ -224,9 +250,11 @@
     private int totalDeckCount;
     private int totalWinnerDeckCount;
     private readonly List<string> colorFilterOrder = ["W", "U", "B", "R", "G", "C"];
+    private readonly List<CardRarity> rarityFilterOrder = [CardRarity.Common, CardRarity.Uncommon, CardRarity.Rare, CardRarity.Mythic];
     private List<string> availableTypeFilters = new();
     private HashSet<string> selectedColorFilters = new(StringComparer.Ordinal);
     private HashSet<string> selectedTypeFilters = new(StringComparer.OrdinalIgnoreCase);
+    private HashSet<CardRarity> selectedRarityFilters = new();
     private SortColumn currentSortColumn = SortColumn.WinnerDeckPercent;
     private bool isAscending = false;
 
@@ -247,6 +275,7 @@
         CardName,
         Type,
         Color,
+        Rarity,
         Decks,
         PlayedPercent,
         WinnerDecks,
@@ -349,9 +378,9 @@
         visualsByName.TryGetValue(aggregate.CardName, out var visual);
         FoundationsCardCatalog.TryGetMetadata(aggregate.CardName, out var metadata);
 
-        var colors = visual?.ColorIdentity?.Length > 0
-            ? visual.ColorIdentity
-            : metadata?.ColorIdentity ?? [];
+        var colors = metadata is not null
+            ? FoundationsCardCatalog.GetColorIdentityFromManaCost(metadata.ManaCost).ToArray()
+            : visual?.ColorIdentity ?? [];
 
         var typeLine = metadata is not null && metadata.Types.Length > 0
             ? string.Join(" / ", metadata.Types)
@@ -362,6 +391,7 @@
         var colorFilterKeys = colors.Length > 0
             ? colors.Distinct(StringComparer.Ordinal).OrderBy(ColorIdentityHelper.GetColorOrder).ToList()
             : ["C"];
+        var rarity = metadata?.Rarity ?? CardRarity.Common;
 
         return new CardRow
         {
@@ -375,6 +405,7 @@
             ColorFilterKeys = colorFilterKeys,
             TypeFilters = cardTypes,
             IsBasicLand = isBasicLand,
+            Rarity = rarity,
             ImageUrl = visual?.ImageUrl ?? $"https://api.scryfall.com/cards/named?exact={Uri.EscapeDataString(aggregate.CardName)}&set=fdn&format=image",
             DeckCount = aggregate.DeckCount,
             PlayedPercent = totalDeckCount > 0 ? (double)aggregate.DeckCount / totalDeckCount : null,
@@ -436,21 +467,40 @@
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
             }
         }
+
+            if (selectedRarityFilters.Count == 0)
+            {
+                selectedRarityFilters = rarityFilterOrder.ToHashSet();
+            }
+            else
+            {
+                selectedRarityFilters.IntersectWith(rarityFilterOrder);
+                if (selectedRarityFilters.Count == 0)
+                {
+                    selectedRarityFilters = rarityFilterOrder.ToHashSet();
+                }
+            }
     }
 
     private IEnumerable<CardRow> GetFilteredRows()
     {
+        if (selectedColorFilters.Count == 0
+            || selectedTypeFilters.Count == 0
+            || selectedRarityFilters.Count == 0)
+        {
+            return [];
+        }
+
         return cardRows.Where(row =>
         {
-            var matchesColor = selectedColorFilters.Count == 0
-                || row.ColorFilterKeys.Any(color => selectedColorFilters.Contains(color));
+            var matchesColor = row.ColorFilterKeys.Any(color => selectedColorFilters.Contains(color));
 
-            var matchesType = selectedTypeFilters.Count == 0
-                || row.TypeFilters.Any(type => selectedTypeFilters.Contains(type));
+            var matchesType = row.TypeFilters.Any(type => selectedTypeFilters.Contains(type));
 
             var basicLandAllowed = !row.IsBasicLand || selectedTypeFilters.Contains("Basic Land");
+            var matchesRarity = selectedRarityFilters.Contains(row.Rarity);
 
-            return matchesColor && matchesType && basicLandAllowed;
+            return matchesColor && matchesType && basicLandAllowed && matchesRarity;
         });
     }
 
@@ -467,6 +517,9 @@
             SortColumn.Color => isAscending
                 ? source.OrderBy(row => row.ColorKey)
                 : source.OrderByDescending(row => row.ColorKey),
+            SortColumn.Rarity => isAscending
+                ? source.OrderBy(row => GetRaritySortRank(row.Rarity))
+                : source.OrderByDescending(row => GetRaritySortRank(row.Rarity)),
             SortColumn.Decks => isAscending
                 ? source.OrderBy(row => row.DeckCount)
                 : source.OrderByDescending(row => row.DeckCount),
@@ -545,6 +598,30 @@
         selectedTypeFilters = availableTypeFilters
             .Where(type => !type.Equals("Basic Land", StringComparison.OrdinalIgnoreCase))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        selectedRarityFilters = rarityFilterOrder.ToHashSet();
+    }
+
+    private void OnRarityFilterChanged(CardRarity rarity, object? value)
+    {
+        var isChecked = value is bool checkedValue && checkedValue;
+        if (isChecked)
+        {
+            selectedRarityFilters.Add(rarity);
+        }
+        else
+        {
+            selectedRarityFilters.Remove(rarity);
+        }
+    }
+
+    private void SelectAllRarities()
+    {
+        selectedRarityFilters = rarityFilterOrder.ToHashSet();
+    }
+
+    private void ClearAllRarities()
+    {
+        selectedRarityFilters.Clear();
     }
 
     private static List<string> GetCardTypes(FoundationsCardMetadata? metadata)
@@ -620,6 +697,23 @@
         _ => color
     };
 
+    private static string GetRarityFilterLabel(CardRarity rarity)
+    {
+        return FoundationsCardCatalog.GetRarityDisplayName(rarity);
+    }
+
+    private static int GetRaritySortRank(CardRarity rarity)
+    {
+        return rarity switch
+        {
+            CardRarity.Common => 0,
+            CardRarity.Uncommon => 1,
+            CardRarity.Rare => 2,
+            CardRarity.Mythic => 3,
+            _ => int.MaxValue
+        };
+    }
+
     private static string GetStatTooltip(SortColumn column) => column switch
     {
         SortColumn.Decks => "How many decks include this card at least once.\n\nUsefulness: Low-Medium for card quality (mainly sample size/popularity).",
@@ -678,6 +772,7 @@
         public List<string> ColorFilterKeys { get; set; } = new();
         public List<string> TypeFilters { get; set; } = new();
         public bool IsBasicLand { get; set; }
+        public CardRarity Rarity { get; set; } = CardRarity.Common;
         public string ImageUrl { get; set; } = string.Empty;
         public int DeckCount { get; set; }
         public int WinnerDeckCount { get; set; }

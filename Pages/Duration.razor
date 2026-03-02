@@ -1,6 +1,7 @@
 @page "/duration"
 @using MagicDraftStats.Services
 @using MagicDraftStats.Models
+@using MagicDraftStats.Components
 @inject IBGStatsImportService BGStatsService
 @inject IGlobalFilterService GlobalFilterService
 
@@ -10,14 +11,14 @@
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
         <h1><i class="bi bi-clock me-4 d-none d-md-inline"></i>Duration</h1>
         <div class="text-muted mt-1 mt-md-0">
-            Showing @deckStats.Count decks
+            Showing @deckStats.Count color combinations
         </div>
     </div>
 
     @if (isLoading)
     {
         <div class="alert alert-info">
-            <i class="bi bi-arrow-clockwise spin me-2"></i>Loading deck duration statistics...
+            <i class="bi bi-arrow-clockwise spin me-2"></i>Loading color combination duration statistics...
         </div>
     }
     else if (errorMessage != null)
@@ -29,7 +30,7 @@
     else if (!deckStats.Any())
     {
         <div class="alert alert-warning">
-            <i class="bi bi-exclamation-triangle me-2"></i>No decks found.
+            <i class="bi bi-exclamation-triangle me-2"></i>No color combinations found.
         </div>
     }
     else
@@ -43,30 +44,170 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <p><strong>Average Duration:</strong> @(deckStats.Any() ? deckStats.Average(d => d.AverageDuration).ToString("F1") : "0") minutes</p>
+                        <p><strong>Average Duration:</strong> @(overallAverageDuration?.ToString("F1") ?? "-") minutes</p>
                         <hr />
                         @{
                             var fastestDeck = deckStats.OrderBy(d => d.AverageDuration).FirstOrDefault();
                             var slowestDeck = deckStats.OrderByDescending(d => d.AverageDuration).FirstOrDefault();
-                            var fastestWinDeck = deckStats.Where(d => d.Wins > 0).OrderBy(d => d.WinDuration).FirstOrDefault();
-                            var slowestWinDeck = deckStats.Where(d => d.Wins > 0).OrderByDescending(d => d.WinDuration).FirstOrDefault();
+                            var fastestWinDeck = deckStats.Where(d => d.WinDuration.HasValue).OrderBy(d => d.WinDuration).FirstOrDefault();
+                            var slowestWinDeck = deckStats.Where(d => d.WinDuration.HasValue).OrderByDescending(d => d.WinDuration).FirstOrDefault();
+                            var fastestColor = monoColorStats.OrderBy(d => d.AverageDuration).FirstOrDefault();
+                            var slowestColor = monoColorStats.OrderByDescending(d => d.AverageDuration).FirstOrDefault();
+                            var fastestWinningColor = monoColorStats.Where(d => d.WinDuration.HasValue).OrderBy(d => d.WinDuration).FirstOrDefault();
+                            var slowestWinningColor = monoColorStats.Where(d => d.WinDuration.HasValue).OrderByDescending(d => d.WinDuration).FirstOrDefault();
                         }
                         @if (fastestDeck != null)
                         {
-                            <p><strong>Fastest Deck:</strong> <NavLink class="deck-link" href="@Utilities.GetDeckUrl(fastestDeck.DeckName)">@fastestDeck.DeckName</NavLink> (@(fastestDeck.AverageDuration.ToString("F1")) min)</p>
+                            <p>
+                                <strong>Fastest Color Combination:</strong>
+                                <span class="d-inline-flex align-items-center gap-1 flex-wrap">
+                                    <NavLink class="deck-link" href="@Utilities.GetDeckUrl(fastestDeck.LinkDeckName)">@fastestDeck.DeckName</NavLink>
+                                    @if (fastestDeck.ColorSymbols.Count > 0)
+                                    {
+                                        <span class="d-inline-flex align-items-center gap-1 ms-1">
+                                            @foreach (var symbol in fastestDeck.ColorSymbols)
+                                            {
+                                                <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                            }
+                                        </span>
+                                    }
+                                    <span>(@(fastestDeck.AverageDuration.ToString("F1")) min)</span>
+                                </span>
+                            </p>
                         }
                         @if (slowestDeck != null)
                         {
-                            <p><strong>Slowest Deck:</strong> <NavLink class="deck-link" href="@Utilities.GetDeckUrl(slowestDeck.DeckName)">@slowestDeck.DeckName</NavLink> (@(slowestDeck.AverageDuration.ToString("F1")) min)</p>
+                            <p>
+                                <strong>Slowest Color Combination:</strong>
+                                <span class="d-inline-flex align-items-center gap-1 flex-wrap">
+                                    <NavLink class="deck-link" href="@Utilities.GetDeckUrl(slowestDeck.LinkDeckName)">@slowestDeck.DeckName</NavLink>
+                                    @if (slowestDeck.ColorSymbols.Count > 0)
+                                    {
+                                        <span class="d-inline-flex align-items-center gap-1 ms-1">
+                                            @foreach (var symbol in slowestDeck.ColorSymbols)
+                                            {
+                                                <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                            }
+                                        </span>
+                                    }
+                                    <span>(@(slowestDeck.AverageDuration.ToString("F1")) min)</span>
+                                </span>
+                            </p>
+                        }
+                        @if (fastestColor != null)
+                        {
+                            <p>
+                                <strong>Fastest Color:</strong>
+                                <span class="d-inline-flex align-items-center gap-1 flex-wrap">
+                                    <span>@fastestColor.DeckName</span>
+                                    @if (fastestColor.ColorSymbols.Count > 0)
+                                    {
+                                        <span class="d-inline-flex align-items-center gap-1 ms-1">
+                                            @foreach (var symbol in fastestColor.ColorSymbols)
+                                            {
+                                                <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                            }
+                                        </span>
+                                    }
+                                    <span>(@(fastestColor.AverageDuration.ToString("F1")) min)</span>
+                                </span>
+                            </p>
+                        }
+                        @if (slowestColor != null)
+                        {
+                            <p>
+                                <strong>Slowest Color:</strong>
+                                <span class="d-inline-flex align-items-center gap-1 flex-wrap">
+                                    <span>@slowestColor.DeckName</span>
+                                    @if (slowestColor.ColorSymbols.Count > 0)
+                                    {
+                                        <span class="d-inline-flex align-items-center gap-1 ms-1">
+                                            @foreach (var symbol in slowestColor.ColorSymbols)
+                                            {
+                                                <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                            }
+                                        </span>
+                                    }
+                                    <span>(@(slowestColor.AverageDuration.ToString("F1")) min)</span>
+                                </span>
+                            </p>
                         }
                         <hr />
                         @if (fastestWinDeck != null)
                         {
-                            <p><strong>Fastest Deck When Winning:</strong> <NavLink class="deck-link" href="@Utilities.GetDeckUrl(fastestWinDeck.DeckName)">@fastestWinDeck.DeckName</NavLink> (@(fastestWinDeck.WinDuration.ToString("F1")) min)</p>
+                            <p>
+                                <strong>Fastest Color Combination When Winning:</strong>
+                                <span class="d-inline-flex align-items-center gap-1 flex-wrap">
+                                    <NavLink class="deck-link" href="@Utilities.GetDeckUrl(fastestWinDeck.LinkDeckName)">@fastestWinDeck.DeckName</NavLink>
+                                    @if (fastestWinDeck.ColorSymbols.Count > 0)
+                                    {
+                                        <span class="d-inline-flex align-items-center gap-1 ms-1">
+                                            @foreach (var symbol in fastestWinDeck.ColorSymbols)
+                                            {
+                                                <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                            }
+                                        </span>
+                                    }
+                                    <span>(@(fastestWinDeck.WinDuration?.ToString("F1")) min)</span>
+                                </span>
+                            </p>
                         }
                         @if (slowestWinDeck != null)
                         {
-                            <p><strong>Slowest Deck When Winning:</strong> <NavLink class="deck-link" href="@Utilities.GetDeckUrl(slowestWinDeck.DeckName)">@slowestWinDeck.DeckName</NavLink> (@(slowestWinDeck.WinDuration.ToString("F1")) min)</p>
+                            <p>
+                                <strong>Slowest Color Combination When Winning:</strong>
+                                <span class="d-inline-flex align-items-center gap-1 flex-wrap">
+                                    <NavLink class="deck-link" href="@Utilities.GetDeckUrl(slowestWinDeck.LinkDeckName)">@slowestWinDeck.DeckName</NavLink>
+                                    @if (slowestWinDeck.ColorSymbols.Count > 0)
+                                    {
+                                        <span class="d-inline-flex align-items-center gap-1 ms-1">
+                                            @foreach (var symbol in slowestWinDeck.ColorSymbols)
+                                            {
+                                                <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                            }
+                                        </span>
+                                    }
+                                    <span>(@(slowestWinDeck.WinDuration?.ToString("F1")) min)</span>
+                                </span>
+                            </p>
+                        }
+                        @if (fastestWinningColor != null)
+                        {
+                            <p>
+                                <strong>Fastest Color When Winning:</strong>
+                                <span class="d-inline-flex align-items-center gap-1 flex-wrap">
+                                    <span>@fastestWinningColor.DeckName</span>
+                                    @if (fastestWinningColor.ColorSymbols.Count > 0)
+                                    {
+                                        <span class="d-inline-flex align-items-center gap-1 ms-1">
+                                            @foreach (var symbol in fastestWinningColor.ColorSymbols)
+                                            {
+                                                <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                            }
+                                        </span>
+                                    }
+                                    <span>(@(fastestWinningColor.WinDuration?.ToString("F1")) min)</span>
+                                </span>
+                            </p>
+                        }
+                        @if (slowestWinningColor != null)
+                        {
+                            <p>
+                                <strong>Slowest Color When Winning:</strong>
+                                <span class="d-inline-flex align-items-center gap-1 flex-wrap">
+                                    <span>@slowestWinningColor.DeckName</span>
+                                    @if (slowestWinningColor.ColorSymbols.Count > 0)
+                                    {
+                                        <span class="d-inline-flex align-items-center gap-1 ms-1">
+                                            @foreach (var symbol in slowestWinningColor.ColorSymbols)
+                                            {
+                                                <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                            }
+                                        </span>
+                                    }
+                                    <span>(@(slowestWinningColor.WinDuration?.ToString("F1")) min)</span>
+                                </span>
+                            </p>
                         }
                     </div>
                 </div>
@@ -77,11 +218,21 @@
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-striped table-hover">
+                        <colgroup>
+                            <col style="width: 16%;" />
+                            <col style="width: 14%;" />
+                            <col style="width: 12%;" />
+                            <col style="width: 10%;" />
+                            <col style="width: 10%;" />
+                            <col style="width: 13%;" />
+                            <col style="width: 10%;" />
+                            <col style="width: 15%;" />
+                        </colgroup>
                         <thead>
                             <tr>
                                 <th>
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.DeckName)">
-                                        Deck
+                                        Colors
                                         @if (currentSortColumn == SortColumn.DeckName)
                                         {
                                             <i class="bi @(isAscending ? "bi-sort-up" : "bi-sort-down")"></i>
@@ -92,6 +243,7 @@
                                         }
                                     </button>
                                 </th>
+                                <th></th>
                                 <th class="text-center">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Duration)">
                                         Duration (min)
@@ -177,7 +329,22 @@
                             {
                                 <tr>
                                     <td>
-                                        <NavLink class="deck-link" href="@Utilities.GetDeckUrl(deck.DeckName)">@deck.DeckName</NavLink>
+                                        <NavLink class="deck-link" href="@Utilities.GetDeckUrl(deck.LinkDeckName)">@deck.DeckName</NavLink>
+                                    </td>
+                                    <td>
+                                        @if (deck.ColorSymbols.Count > 0)
+                                        {
+                                            <div class="d-flex align-items-center gap-1" style="min-width: fit-content;">
+                                                @foreach (var symbol in deck.ColorSymbols)
+                                                {
+                                                    <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
                                     </td>
                                     <td class="text-center">
                                         <span class="fw-bold @GetDurationColor(deck.AverageDuration)">@(deck.AverageDuration.ToString("F1"))</span>
@@ -189,9 +356,9 @@
                                         <span class="text-success">@deck.Wins</span>
                                     </td>
                                     <td class="text-center">
-                                        @if (deck.Wins > 0)
+                                        @if (deck.WinDuration.HasValue)
                                         {
-                                            <span class="fw-bold text-success">@(deck.WinDuration.ToString("F1"))</span>
+                                            <span class="fw-bold text-success">@(deck.WinDuration.Value.ToString("F1"))</span>
                                         }
                                         else
                                         {
@@ -202,9 +369,9 @@
                                         <span class="text-danger">@deck.Losses</span>
                                     </td>
                                     <td class="text-center">
-                                        @if (deck.Losses > 0)
+                                        @if (deck.LossDuration.HasValue)
                                         {
-                                            <span class="fw-bold text-danger">@(deck.LossDuration.ToString("F1"))</span>
+                                            <span class="fw-bold text-danger">@(deck.LossDuration.Value.ToString("F1"))</span>
                                         }
                                         else
                                         {
@@ -226,13 +393,13 @@
                 </h5>
             </div>
             <div class="card-body">
-                <ApexChart TItem="DeckStats">
+                <ApexChart TItem="DeckStats" Options="durationChartOptions">
                     <ApexPointSeries TItem="DeckStats"
                                      Items="GetSortedDeckStats()"
                                      Name="Duration (min)"
                                      SeriesType="SeriesType.Bar"
                                      XValue="e => e.DeckName"
-                                     YValue="e => (decimal)(int)e.AverageDuration" />
+                                     YValue="e => (decimal)e.AverageDuration" />
                 </ApexChart>
             </div>
         </div>
@@ -329,9 +496,9 @@
                                         <span class="fw-bold @GetDurationColor(player.AverageDuration)">@(player.AverageDuration.ToString("F1"))</span>
                                     </td>
                                     <td class="text-center">
-                                        @if (player.Wins > 0)
+                                        @if (player.WinDuration.HasValue)
                                         {
-                                            <span class="fw-bold @GetDurationColor(player.WinDuration)">@(player.WinDuration.ToString("F1"))</span>
+                                            <span class="fw-bold @GetDurationColor(player.WinDuration.Value)">@(player.WinDuration.Value.ToString("F1"))</span>
                                         }
                                         else
                                         {
@@ -339,9 +506,9 @@
                                         }
                                     </td>
                                     <td class="text-center">
-                                        @if (player.Losses > 0)
+                                        @if (player.LossDuration.HasValue)
                                         {
-                                            <span class="fw-bold @GetDurationColor(player.LossDuration)">@(player.LossDuration.ToString("F1"))</span>
+                                            <span class="fw-bold @GetDurationColor(player.LossDuration.Value)">@(player.LossDuration.Value.ToString("F1"))</span>
                                         }
                                         else
                                         {
@@ -362,11 +529,15 @@
     private bool isLoading = true;
     private string? errorMessage;
     private List<DeckStats> deckStats = new();
+    private List<DeckStats> monoColorStats = new();
     private List<PlayerStats> playerStats = new();
+    private double? overallAverageDuration;
+    private ApexChartOptions<DeckStats> durationChartOptions = new();
     private SortColumn currentSortColumn = SortColumn.Duration;
     private bool isAscending = true;
     private PlayerSortColumn currentPlayerSortColumn = PlayerSortColumn.AverageDuration;
     private bool isPlayerSortAscending = true;
+    private static readonly string[] BaseColors = ["W", "U", "B", "R", "G"];
 
     protected override void OnInitialized()
     {
@@ -395,27 +566,55 @@
 
             var plays = await BGStatsService.GetMagicPlaysAsync(GlobalFilterService.SelectedVariants);
 
-            // Calculate deck statistics with duration
-            var deckGroups = plays
-                .SelectMany(p => p.PlayerScores.Select(ps => new { Play = p, PlayerScore = ps }))
-                .GroupBy(x => x.PlayerScore.Deck)
-                .Where(g => !string.IsNullOrWhiteSpace(g.Key));
+            var playsWithValidDuration = plays
+                .Where(play => play.DurationInMinutes > 0)
+                .ToList();
 
-            deckStats = deckGroups.Select(g => new DeckStats
-            {
-                DeckName = g.Key,
-                TotalPlays = g.Count(),
-                Wins = g.Count(x => x.PlayerScore.IsWinner),
-                Losses = g.Count(x => !x.PlayerScore.IsWinner),
-                AverageDuration = g.Average(x => x.Play.DurationInMinutes),
-                WinDuration = g.Where(x => x.PlayerScore.IsWinner).Any() ? 
-                             g.Where(x => x.PlayerScore.IsWinner).Average(x => x.Play.DurationInMinutes) : 0,
-                LossDuration = g.Where(x => !x.PlayerScore.IsWinner).Any() ? 
-                             g.Where(x => !x.PlayerScore.IsWinner).Average(x => x.Play.DurationInMinutes) : 0
-            }).ToList();
+            var scoreEntries = playsWithValidDuration
+                .SelectMany(play => play.PlayerScores.Select(score => new PlayerScoreDurationEntry(
+                    play,
+                    score,
+                    ColorIdentityHelper.GetRoleColorIdentityKeys(score.Deck))))
+                .ToList();
+
+            overallAverageDuration = playsWithValidDuration.Any()
+                ? playsWithValidDuration.Average(play => play.DurationInMinutes)
+                : null;
+
+            var deckGroups = scoreEntries
+                .GroupBy(entry => BuildColorIdentityKey(entry.ColorIdentityKeys));
+
+            deckStats = deckGroups
+                .Select(group =>
+                {
+                    var keys = group.First().ColorIdentityKeys;
+                    return CreateDeckStats(
+                        ColorIdentityHelper.GetColorIdentityName(keys),
+                        BuildDeckLinkName(keys),
+                        keys.Select(color => new DeckColorSymbol(color, false)).ToList(),
+                        group);
+                })
+                .ToList();
+
+            monoColorStats = BaseColors
+                .Select(color =>
+                {
+                    var colorEntries = scoreEntries
+                        .Where(entry => entry.ColorIdentityKeys.Any(key => key.Equals(color, StringComparison.Ordinal)))
+                        .ToList();
+
+                    return CreateDeckStats(
+                        ColorIdentityHelper.GetColorName(color),
+                        BuildDeckLinkName([color]),
+                        [new DeckColorSymbol(color, false)],
+                        colorEntries);
+                })
+                .Where(stats => stats.TotalPlays > 0)
+                .ToList();
 
             // Calculate player statistics with duration
             var playerGroups = plays
+                .Where(play => play.DurationInMinutes > 0)
                 .SelectMany(p => p.PlayerScores.Select(ps => new { Play = p, PlayerScore = ps }))
                 .GroupBy(x => new { x.PlayerScore.PlayerRefId, x.PlayerScore.PlayerName })
                 .Where(g => !string.IsNullOrWhiteSpace(g.Key.PlayerName));
@@ -428,10 +627,10 @@
                 Wins = g.Count(x => x.PlayerScore.IsWinner),
                 Losses = g.Count(x => !x.PlayerScore.IsWinner),
                 AverageDuration = g.Average(x => x.Play.DurationInMinutes),
-                WinDuration = g.Where(x => x.PlayerScore.IsWinner).Any() ? 
-                             g.Where(x => x.PlayerScore.IsWinner).Average(x => x.Play.DurationInMinutes) : 0,
-                LossDuration = g.Where(x => !x.PlayerScore.IsWinner).Any() ? 
-                             g.Where(x => !x.PlayerScore.IsWinner).Average(x => x.Play.DurationInMinutes) : 0
+                WinDuration = g.Where(x => x.PlayerScore.IsWinner).Any() ?
+                             g.Where(x => x.PlayerScore.IsWinner).Average(x => x.Play.DurationInMinutes) : null,
+                LossDuration = g.Where(x => !x.PlayerScore.IsWinner).Any() ?
+                             g.Where(x => !x.PlayerScore.IsWinner).Average(x => x.Play.DurationInMinutes) : null
             }).ToList();
         }
         catch (Exception ex)
@@ -446,7 +645,33 @@
 
     protected override async Task OnInitializedAsync()
     {
+        ConfigureDurationChartOptions();
         await LoadData();
+    }
+
+    private void ConfigureDurationChartOptions()
+    {
+        durationChartOptions = new ApexChartOptions<DeckStats>
+        {
+            Chart = new Chart { FontFamily = "Roboto Condensed" },
+            Tooltip = new Tooltip
+            {
+                Y = new TooltipY
+                {
+                    Formatter = @"function(val) { return (val).toFixed(0); }"
+                }
+            },
+            Yaxis =
+            [
+                new YAxis
+                {
+                    Labels = new YAxisLabels
+                    {
+                        Formatter = @"function(val) { return (val).toFixed(0); }"
+                    }
+                }
+            ]
+        };
     }
 
     private void SortBy(SortColumn column)
@@ -473,8 +698,12 @@
             SortColumn.Plays => isAscending ? query.OrderBy(d => d.TotalPlays) : query.OrderByDescending(d => d.TotalPlays),
             SortColumn.Wins => isAscending ? query.OrderBy(d => d.Wins) : query.OrderByDescending(d => d.Wins),
             SortColumn.Losses => isAscending ? query.OrderBy(d => d.Losses) : query.OrderByDescending(d => d.Losses),
-            SortColumn.WinDuration => isAscending ? query.OrderBy(d => d.WinDuration) : query.OrderByDescending(d => d.WinDuration),
-            SortColumn.LossDuration => isAscending ? query.OrderBy(d => d.LossDuration) : query.OrderByDescending(d => d.LossDuration),
+            SortColumn.WinDuration => isAscending
+                ? query.OrderBy(d => d.WinDuration ?? double.MaxValue)
+                : query.OrderByDescending(d => d.WinDuration ?? double.MinValue),
+            SortColumn.LossDuration => isAscending
+                ? query.OrderBy(d => d.LossDuration ?? double.MaxValue)
+                : query.OrderByDescending(d => d.LossDuration ?? double.MinValue),
             _ => query.OrderBy(d => d.AverageDuration)
         };
 
@@ -503,8 +732,12 @@
             PlayerSortColumn.PlayerName => isPlayerSortAscending ? query.OrderBy(p => p.PlayerName) : query.OrderByDescending(p => p.PlayerName),
             PlayerSortColumn.TotalGames => isPlayerSortAscending ? query.OrderBy(p => p.TotalGames) : query.OrderByDescending(p => p.TotalGames),
             PlayerSortColumn.AverageDuration => isPlayerSortAscending ? query.OrderBy(p => p.AverageDuration) : query.OrderByDescending(p => p.AverageDuration),
-            PlayerSortColumn.WinDuration => isPlayerSortAscending ? query.OrderBy(p => p.WinDuration) : query.OrderByDescending(p => p.WinDuration),
-            PlayerSortColumn.LossDuration => isPlayerSortAscending ? query.OrderBy(p => p.LossDuration) : query.OrderByDescending(p => p.LossDuration),
+            PlayerSortColumn.WinDuration => isPlayerSortAscending
+                ? query.OrderBy(p => p.WinDuration ?? double.MaxValue)
+                : query.OrderByDescending(p => p.WinDuration ?? double.MinValue),
+            PlayerSortColumn.LossDuration => isPlayerSortAscending
+                ? query.OrderBy(p => p.LossDuration ?? double.MaxValue)
+                : query.OrderByDescending(p => p.LossDuration ?? double.MinValue),
             _ => query.OrderBy(p => p.PlayerName)
         };
 
@@ -528,6 +761,40 @@
         LossDuration
     }
 
+    private static string BuildColorIdentityKey(IReadOnlyList<string> colorIdentityKeys)
+    {
+        return colorIdentityKeys.Count == 0 ? "Colorless" : string.Concat(colorIdentityKeys);
+    }
+
+    private static string BuildDeckLinkName(IReadOnlyList<string> colorIdentityKeys)
+    {
+        return colorIdentityKeys.Count == 0
+            ? "Colorless"
+            : string.Join('/', colorIdentityKeys.Select(ColorIdentityHelper.GetColorName));
+    }
+
+    private static DeckStats CreateDeckStats(string deckName, string linkDeckName, List<DeckColorSymbol> colorSymbols, IEnumerable<PlayerScoreDurationEntry> entries)
+    {
+        var entryList = entries.ToList();
+
+        return new DeckStats
+        {
+            DeckName = deckName,
+            LinkDeckName = linkDeckName,
+            ColorSymbols = colorSymbols,
+            TotalPlays = entryList.Count,
+            Wins = entryList.Count(entry => entry.Score.IsWinner),
+            Losses = entryList.Count(entry => !entry.Score.IsWinner),
+            AverageDuration = entryList.Any() ? entryList.Average(entry => entry.Play.DurationInMinutes) : 0,
+            WinDuration = entryList.Any(entry => entry.Score.IsWinner)
+                ? entryList.Where(entry => entry.Score.IsWinner).Average(entry => entry.Play.DurationInMinutes)
+                : null,
+            LossDuration = entryList.Any(entry => !entry.Score.IsWinner)
+                ? entryList.Where(entry => !entry.Score.IsWinner).Average(entry => entry.Play.DurationInMinutes)
+                : null
+        };
+    }
+
     private enum PlayerSortColumn
     {
         PlayerName,
@@ -540,12 +807,14 @@
     private class DeckStats
     {
         public string DeckName { get; set; } = string.Empty;
+        public string LinkDeckName { get; set; } = string.Empty;
+        public List<DeckColorSymbol> ColorSymbols { get; set; } = [];
         public int TotalPlays { get; set; }
         public int Wins { get; set; }
         public int Losses { get; set; }
         public double AverageDuration { get; set; }
-        public double WinDuration { get; set; }
-        public double LossDuration { get; set; }
+        public double? WinDuration { get; set; }
+        public double? LossDuration { get; set; }
 
         public double WinRate => TotalPlays > 0 ? (double)Wins / TotalPlays : 0;
     }
@@ -558,9 +827,11 @@
         public int Wins { get; set; }
         public int Losses { get; set; }
         public double AverageDuration { get; set; }
-        public double WinDuration { get; set; }
-        public double LossDuration { get; set; }
+        public double? WinDuration { get; set; }
+        public double? LossDuration { get; set; }
 
         public double WinRate => TotalGames > 0 ? (double)Wins / TotalGames : 0;
     }
+
+    private record PlayerScoreDurationEntry(Play Play, PlayerScore Score, IReadOnlyList<string> ColorIdentityKeys);
 }

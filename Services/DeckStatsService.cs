@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 using MagicDraftStats.Models;
 
 namespace MagicDraftStats.Services;
@@ -10,6 +12,9 @@ public interface IDeckStatsService
 
 public sealed class DeckStatsService : IDeckStatsService
 {
+    private readonly ConcurrentDictionary<string, DeckPlayStats> _statsCache = new(StringComparer.Ordinal);
+    private static readonly ConcurrentDictionary<string, HashSet<string>> RoleColorCache = new(StringComparer.Ordinal);
+
     public DeckPlayStats CalculateDeckStats(DeckFile deck, IEnumerable<Play> plays)
     {
         if (deck.Date is null || deck.PlayerRefId <= 0)
@@ -17,7 +22,16 @@ public sealed class DeckStatsService : IDeckStatsService
             return DeckPlayStats.Empty;
         }
 
+        var playList = plays as IList<Play> ?? plays.ToList();
+        var deckDates = BuildDeckDates(deck);
         var symbols = FoundationsCardCatalog.GetDeckColorIdentitySymbols(deck.Cards);
+        var cacheKey = BuildCacheKey(deck, deckDates, symbols, playList);
+
+        if (_statsCache.TryGetValue(cacheKey, out var cachedStats))
+        {
+            return cachedStats;
+        }
+
         var baseColors = symbols.Where(symbol => !symbol.IsSplash).Select(symbol => symbol.ColorKey).ToHashSet(StringComparer.Ordinal);
         var splashColors = symbols.Where(symbol => symbol.IsSplash).Select(symbol => symbol.ColorKey).ToHashSet(StringComparer.Ordinal);
 
@@ -31,7 +45,7 @@ public sealed class DeckStatsService : IDeckStatsService
 
         foreach (var play in plays)
         {
-            if (!TryParsePlayDate(play.Date, out var playDate) || playDate != deck.Date.Value)
+            if (!TryParsePlayDate(play.Date, out var playDate) || !deckDates.Contains(playDate))
             {
                 continue;
             }
@@ -75,7 +89,7 @@ public sealed class DeckStatsService : IDeckStatsService
             }
         }
 
-        return new DeckPlayStats(
+        var stats = new DeckPlayStats(
             matchedPlays,
             wins,
             losses,
@@ -83,6 +97,37 @@ public sealed class DeckStatsService : IDeckStatsService
             lossesAsFirstPlayer,
             winsAsNonFirstPlayer,
             lossesAsNonFirstPlayer);
+
+        if (_statsCache.Count > 5000)
+        {
+            _statsCache.Clear();
+        }
+
+        _statsCache[cacheKey] = stats;
+        return stats;
+    }
+
+    private static HashSet<DateOnly> BuildDeckDates(DeckFile deck)
+    {
+        var dates = new HashSet<DateOnly> { deck.Date!.Value };
+        foreach (var additionalDate in deck.AdditionalDates)
+        {
+            dates.Add(additionalDate);
+        }
+
+        return dates;
+    }
+
+    private static string BuildCacheKey(DeckFile deck, HashSet<DateOnly> deckDates, IReadOnlyList<DeckColorSymbol> symbols, IList<Play> plays)
+    {
+        var datesKey = string.Join('|', deckDates.OrderBy(date => date).Select(date => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)));
+        var colorsKey = string.Join('|', symbols
+            .OrderBy(symbol => symbol.ColorKey)
+            .ThenBy(symbol => symbol.IsSplash)
+            .Select(symbol => $"{symbol.ColorKey}:{(symbol.IsSplash ? 'S' : 'M')}")
+        );
+
+        return $"{RuntimeHelpers.GetHashCode(plays)}::{deck.PlayerRefId}::{datesKey}::{colorsKey}";
     }
 
     private static bool TryParsePlayDate(string playDateRaw, out DateOnly playDate)
@@ -134,6 +179,11 @@ public sealed class DeckStatsService : IDeckStatsService
             return new HashSet<string>(StringComparer.Ordinal);
         }
 
+        if (RoleColorCache.TryGetValue(role, out var cachedRoleColors))
+        {
+            return cachedRoleColors;
+        }
+
         var normalized = role
             .Replace('／', '/')
             .Replace('|', '/')
@@ -149,6 +199,7 @@ public sealed class DeckStatsService : IDeckStatsService
             }
         }
 
+        RoleColorCache[role] = colors;
         return colors;
     }
 

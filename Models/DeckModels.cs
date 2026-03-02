@@ -10,6 +10,9 @@ public class DeckFile
     [JsonPropertyName("date")]
     public DateOnly? Date { get; set; }
 
+    [JsonPropertyName("additionalDates")]
+    public List<DateOnly> AdditionalDates { get; set; } = [];
+
     [JsonPropertyName("rank")]
     public int? Rank { get; set; }
 

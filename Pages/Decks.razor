@@ -196,6 +196,7 @@
                     };
                 })
                 .OrderByDescending(deck => deck.Date)
+                .ThenByDescending(deck => deck.Wins)
                 .ThenBy(deck => deck.PlayerName)
                 .ToList();
 

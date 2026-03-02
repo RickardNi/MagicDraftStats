@@ -234,6 +234,13 @@ a, .btn-link {
     color: #495057;
 }
 
+/* Keep definition-list labels/values vertically centered in row-based stats blocks */
+dl.row > dt,
+dl.row > dd {
+    display: flex;
+    align-items: center;
+}
+
 .flag-icon-column {
     width: 20px;
     padding-left: 0.25rem !important;

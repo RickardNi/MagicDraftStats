@@ -803,7 +803,12 @@
             return actualColors.Count == 0;
         }
 
-        return targetColors.All(color => actualColors.Contains(color, StringComparer.Ordinal));
+        if (actualColors.Count != targetColors.Count)
+        {
+            return false;
+        }
+
+        return actualColors.SequenceEqual(targetColors, StringComparer.Ordinal);
     }
 
     private static string BuildColorIdentityKey(IReadOnlyList<string> colorIdentityKeys)

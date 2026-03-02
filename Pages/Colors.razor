@@ -1,6 +1,7 @@
 @page "/colors"
 @using MagicDraftStats.Services
 @using MagicDraftStats.Models
+@using MagicDraftStats.Components
 @inject IBGStatsImportService BGStatsService
 @inject IGlobalFilterService GlobalFilterService
 
@@ -38,11 +39,21 @@
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-striped table-hover">
+                        <colgroup>
+                            <col style="width: 22%;" />
+                            <col style="width: 8%;" />
+                            <col style="width: 10%;" />
+                            <col style="width: 12%;" />
+                            <col style="width: 10%;" />
+                            <col style="width: 10%;" />
+                            <col style="width: 14%;" />
+                            <col style="width: 14%;" />
+                        </colgroup>
                         <thead>
                             <tr>
                                 <th>
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.DeckName)">
-                                        Name
+                                        Colors
                                         @if (currentSortColumn == SortColumn.DeckName)
                                         {
                                             <i class="bi @(isAscending ? "bi-sort-up" : "bi-sort-down")"></i>
@@ -53,6 +64,7 @@
                                         }
                                     </button>
                                 </th>
+                                <th></th>
                                 <th class="text-center">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Plays)">
                                         Plays
@@ -131,19 +143,6 @@
                                         }
                                     </button>
                                 </th>
-                                <th class="text-center">
-                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.LastPlayed)" style="white-space: nowrap;">
-                                        Last Played
-                                        @if (currentSortColumn == SortColumn.LastPlayed)
-                                        {
-                                            <i class="bi @(isAscending ? "bi-sort-up" : "bi-sort-down")"></i>
-                                        }
-                                        else
-                                        {
-                                            <i class="bi bi-sort text-muted"></i>
-                                        }
-                                    </button>
-                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -153,7 +152,22 @@
 
                                 <tr>
                                     <td>
-                                        <NavLink class="deck-link" href="@Utilities.GetDeckUrl(deck.DeckName)">@deck.DeckName</NavLink>
+                                        <NavLink class="deck-link" href="@Utilities.GetDeckUrl(deck.LinkDeckName)">@deck.DeckName</NavLink>
+                                    </td>
+                                    <td>
+                                        @if (deck.ColorSymbols.Count > 0)
+                                        {
+                                            <div class="d-flex align-items-center gap-1" style="min-width: fit-content;">
+                                                @foreach (var symbol in deck.ColorSymbols)
+                                                {
+                                                    <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
                                     </td>
                                     <td class="text-center">
                                         @deck.TotalPlays
@@ -189,10 +203,173 @@
                                             <span class="text-muted">-</span>
                                         }
                                     </td>
-                                    <td class="text-center">
-                                        @if (deck.LastPlayed.HasValue)
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-filter-square me-2"></i>Single-Color Inclusion
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <colgroup>
+                            <col style="width: 22%;" />
+                            <col style="width: 8%;" />
+                            <col style="width: 10%;" />
+                            <col style="width: 12%;" />
+                            <col style="width: 10%;" />
+                            <col style="width: 10%;" />
+                            <col style="width: 14%;" />
+                            <col style="width: 14%;" />
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortByInclusion(InclusionSortColumn.DeckName)">
+                                        Color
+                                        @if (currentInclusionSortColumn == InclusionSortColumn.DeckName)
                                         {
-                                            <span class="text-muted" style="white-space: nowrap;">@deck.LastPlayed.Value.ToString("yyyy-MM-dd")</span>
+                                            <i class="bi @(isInclusionSortAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-sort text-muted"></i>
+                                        }
+                                    </button>
+                                </th>
+                                <th></th>
+                                <th class="text-center">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortByInclusion(InclusionSortColumn.Plays)">
+                                        Plays
+                                        @if (currentInclusionSortColumn == InclusionSortColumn.Plays)
+                                        {
+                                            <i class="bi @(isInclusionSortAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-sort text-muted"></i>
+                                        }
+                                    </button>
+                                </th>
+                                <th class="text-center">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortByInclusion(InclusionSortColumn.WinRate)">
+                                        Win Rate
+                                        @if (currentInclusionSortColumn == InclusionSortColumn.WinRate)
+                                        {
+                                            <i class="bi @(isInclusionSortAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-sort text-muted"></i>
+                                        }
+                                    </button>
+                                </th>
+                                <th class="text-center">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortByInclusion(InclusionSortColumn.Wins)">
+                                        Wins
+                                        @if (currentInclusionSortColumn == InclusionSortColumn.Wins)
+                                        {
+                                            <i class="bi @(isInclusionSortAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-sort text-muted"></i>
+                                        }
+                                    </button>
+                                </th>
+                                <th class="text-center">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortByInclusion(InclusionSortColumn.Losses)">
+                                        Losses
+                                        @if (currentInclusionSortColumn == InclusionSortColumn.Losses)
+                                        {
+                                            <i class="bi @(isInclusionSortAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-sort text-muted"></i>
+                                        }
+                                    </button>
+                                </th>
+                                <th class="text-center">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortByInclusion(InclusionSortColumn.FirstPlayerWinRate)">
+                                        <i class="bi bi-1-square me-1"></i> Player Win
+                                        @if (currentInclusionSortColumn == InclusionSortColumn.FirstPlayerWinRate)
+                                        {
+                                            <i class="bi @(isInclusionSortAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-sort text-muted"></i>
+                                        }
+                                    </button>
+                                </th>
+                                <th class="text-center">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortByInclusion(InclusionSortColumn.GoingSecondWinRate)">
+                                        <i class="bi bi-2-square me-1"></i> Player Win
+                                        @if (currentInclusionSortColumn == InclusionSortColumn.GoingSecondWinRate)
+                                        {
+                                            <i class="bi @(isInclusionSortAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-sort text-muted"></i>
+                                        }
+                                    </button>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var deck in GetSortedMonoColorInclusionStats())
+                            {
+                                var winRateColor = Utilities.GetWinRateColorForDeck(deck.WinRate);
+
+                                <tr>
+                                    <td>@deck.DeckName</td>
+                                    <td>
+                                        @if (deck.ColorSymbols.Count > 0)
+                                        {
+                                            <div class="d-flex align-items-center gap-1" style="min-width: fit-content;">
+                                                @foreach (var symbol in deck.ColorSymbols)
+                                                {
+                                                    <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">@deck.TotalPlays</td>
+                                    <td class="text-center">
+                                        <span class="fw-bold @winRateColor">@Utilities.FormatWinRate(deck.WinRate)</span>
+                                    </td>
+                                    <td class="text-center"><span class="text-success fw-bold">@deck.Wins</span></td>
+                                    <td class="text-center"><span class="text-danger">@deck.Losses</span></td>
+                                    <td class="text-center">
+                                        @if (deck.FirstPlayerPlays > 0)
+                                        {
+                                            var firstPlayerColor = Utilities.GetWinRateColorForDeck(deck.FirstPlayerWinRate);
+                                            <span class="fw-bold @firstPlayerColor">@Utilities.FormatWinRate(deck.FirstPlayerWinRate)</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (deck.GoingSecondPlays > 0)
+                                        {
+                                            var goingSecondColor = Utilities.GetWinRateColorForDeck(deck.GoingSecondWinRate);
+                                            <span class="fw-bold @goingSecondColor">@Utilities.FormatWinRate(deck.GoingSecondWinRate)</span>
                                         }
                                         else
                                         {
@@ -292,8 +469,12 @@
     private bool isLoading = true;
     private string? errorMessage;
     private List<DeckStats> deckStats = new();
-    private SortColumn currentSortColumn = SortColumn.WinRate;
+    private List<DeckStats> monoColorInclusionStats = new();
+    private SortColumn currentSortColumn = SortColumn.Plays;
     private bool isAscending = false;
+    private InclusionSortColumn currentInclusionSortColumn = InclusionSortColumn.DeckName;
+    private bool isInclusionSortAscending = true;
+    private static readonly string[] BaseColors = ["W", "U", "B", "R", "G"];
     private ApexChartOptions<DeckStats> horizontalChartOptions = new();
     private ApexChartOptions<DeckStats> verticalChartOptions = new();
     private ChartOrientation chartOrientation = ChartOrientation.Horizontal;
@@ -329,24 +510,49 @@
             isLoading = true;
 
             var plays = await BGStatsService.GetMagicPlaysAsync(GlobalFilterService.SelectedVariants);
+            var scoreEntries = plays
+                .SelectMany(play => play.PlayerScores.Select(score => new PlayerScoreColorEntry(
+                    score,
+                    ColorIdentityHelper.GetRoleColorIdentityKeys(score.Deck))))
+                .ToList();
 
-            var deckGroups = plays
-                .SelectMany(p => p.PlayerScores)
-                .GroupBy(ps => ps.Deck)
-                .Where(g => !string.IsNullOrWhiteSpace(g.Key));
+            var deckGroups = scoreEntries
+                .GroupBy(entry => BuildColorIdentityKey(entry.ColorIdentityKeys));
 
-            deckStats = deckGroups.Select(g => new DeckStats
-            {
-                DeckName = g.Key,
-                TotalPlays = g.Count(),
-                Wins = g.Count(ps => ps.IsWinner),
-                Losses = g.Count(ps => !ps.IsWinner),
-                FirstPlayerPlays = g.Count(ps => ps.IsFirstPlayer),
-                FirstPlayerWins = g.Count(ps => ps.IsFirstPlayer && ps.IsWinner),
-                GoingSecondPlays = g.Count(ps => !ps.IsFirstPlayer),
-                GoingSecondWins = g.Count(ps => !ps.IsFirstPlayer && ps.IsWinner),
-                LastPlayed = g.Max(ps => DateTime.Parse(plays.First(p => p.PlayerScores.Contains(ps)).Date))
-            }).ToList();
+            deckStats = deckGroups
+                .Select(group =>
+                {
+                    var keys = group.First().ColorIdentityKeys;
+                    var representativeLinkDeckName = group
+                        .Where(entry => !string.IsNullOrWhiteSpace(entry.Score.Deck))
+                        .GroupBy(entry => entry.Score.Deck)
+                        .OrderByDescending(deckGroup => deckGroup.Count())
+                        .ThenBy(deckGroup => deckGroup.Key, StringComparer.Ordinal)
+                        .Select(deckGroup => deckGroup.Key)
+                        .FirstOrDefault() ?? BuildDeckLinkName(keys);
+
+                    return CreateDeckStats(
+                        ColorIdentityHelper.GetColorIdentityName(keys),
+                        representativeLinkDeckName,
+                        keys.Select(color => new DeckColorSymbol(color, false)).ToList(),
+                        group);
+                })
+                .ToList();
+
+            monoColorInclusionStats = BaseColors
+                .Select(color =>
+                {
+                    var colorEntries = scoreEntries
+                        .Where(entry => entry.ColorIdentityKeys.Any(key => key.Equals(color, StringComparison.Ordinal)))
+                        .ToList();
+
+                    return CreateDeckStats(
+                        ColorIdentityHelper.GetColorName(color),
+                        BuildDeckLinkName([color]),
+                        [new DeckColorSymbol(color, false)],
+                        colorEntries);
+                })
+                .ToList();
         }
         catch (Exception ex)
         {
@@ -396,7 +602,6 @@
             SortColumn.WinRate => isAscending ? query.OrderBy(d => d.WinRate) : query.OrderByDescending(d => d.WinRate),
             SortColumn.FirstPlayerWinRate => isAscending ? query.OrderBy(d => d.FirstPlayerWinRate) : query.OrderByDescending(d => d.FirstPlayerWinRate),
             SortColumn.GoingSecondWinRate => isAscending ? query.OrderBy(d => d.GoingSecondWinRate) : query.OrderByDescending(d => d.GoingSecondWinRate),
-            SortColumn.LastPlayed => isAscending ? query.OrderBy(d => d.LastPlayed ?? DateTime.MinValue) : query.OrderByDescending(d => d.LastPlayed ?? DateTime.MinValue),
             _ => query.OrderByDescending(d => d.WinRate).ThenByDescending(d => d.TotalPlays)
         };
 
@@ -605,8 +810,89 @@
         Losses,
         WinRate,
         FirstPlayerWinRate,
-        GoingSecondWinRate,
-        LastPlayed
+        GoingSecondWinRate
+    }
+
+    private enum InclusionSortColumn
+    {
+        DeckName,
+        Plays,
+        Wins,
+        Losses,
+        WinRate,
+        FirstPlayerWinRate,
+        GoingSecondWinRate
+    }
+
+    private static string BuildColorIdentityKey(IReadOnlyList<string> colorIdentityKeys)
+    {
+        return colorIdentityKeys.Count == 0 ? "Colorless" : string.Concat(colorIdentityKeys);
+    }
+
+    private void SortByInclusion(InclusionSortColumn column)
+    {
+        if (column == currentInclusionSortColumn)
+        {
+            isInclusionSortAscending = !isInclusionSortAscending;
+        }
+        else
+        {
+            currentInclusionSortColumn = column;
+            isInclusionSortAscending = false;
+        }
+    }
+
+    private List<DeckStats> GetSortedMonoColorInclusionStats()
+    {
+        var query = monoColorInclusionStats.AsEnumerable();
+
+        var sortedDeckStats = currentInclusionSortColumn switch
+        {
+            InclusionSortColumn.DeckName => isInclusionSortAscending
+                ? query.OrderBy(GetPrimaryColorOrder)
+                : query.OrderByDescending(GetPrimaryColorOrder),
+            InclusionSortColumn.Plays => isInclusionSortAscending ? query.OrderBy(d => d.TotalPlays) : query.OrderByDescending(d => d.TotalPlays),
+            InclusionSortColumn.Wins => isInclusionSortAscending ? query.OrderBy(d => d.Wins) : query.OrderByDescending(d => d.Wins),
+            InclusionSortColumn.Losses => isInclusionSortAscending ? query.OrderBy(d => d.Losses) : query.OrderByDescending(d => d.Losses),
+            InclusionSortColumn.WinRate => isInclusionSortAscending ? query.OrderBy(d => d.WinRate) : query.OrderByDescending(d => d.WinRate),
+            InclusionSortColumn.FirstPlayerWinRate => isInclusionSortAscending ? query.OrderBy(d => d.FirstPlayerWinRate) : query.OrderByDescending(d => d.FirstPlayerWinRate),
+            InclusionSortColumn.GoingSecondWinRate => isInclusionSortAscending ? query.OrderBy(d => d.GoingSecondWinRate) : query.OrderByDescending(d => d.GoingSecondWinRate),
+            _ => query.OrderBy(GetPrimaryColorOrder)
+        };
+
+        return sortedDeckStats.ToList();
+    }
+
+    private static int GetPrimaryColorOrder(DeckStats deck)
+    {
+        var primaryColorKey = deck.ColorSymbols.FirstOrDefault()?.ColorKey;
+        return primaryColorKey is null ? int.MaxValue : ColorIdentityHelper.GetColorOrder(primaryColorKey);
+    }
+
+    private static string BuildDeckLinkName(IReadOnlyList<string> colorIdentityKeys)
+    {
+        return colorIdentityKeys.Count == 0
+            ? "Colorless"
+            : string.Join('/', colorIdentityKeys.Select(ColorIdentityHelper.GetColorName));
+    }
+
+    private static DeckStats CreateDeckStats(string deckName, string linkDeckName, List<DeckColorSymbol> colorSymbols, IEnumerable<PlayerScoreColorEntry> entries)
+    {
+        var entryList = entries.ToList();
+
+        return new DeckStats
+        {
+            DeckName = deckName,
+            LinkDeckName = linkDeckName,
+            ColorSymbols = colorSymbols,
+            TotalPlays = entryList.Count,
+            Wins = entryList.Count(entry => entry.Score.IsWinner),
+            Losses = entryList.Count(entry => !entry.Score.IsWinner),
+            FirstPlayerPlays = entryList.Count(entry => entry.Score.IsFirstPlayer),
+            FirstPlayerWins = entryList.Count(entry => entry.Score.IsFirstPlayer && entry.Score.IsWinner),
+            GoingSecondPlays = entryList.Count(entry => !entry.Score.IsFirstPlayer),
+            GoingSecondWins = entryList.Count(entry => !entry.Score.IsFirstPlayer && entry.Score.IsWinner)
+        };
     }
 
     private List<DeckStats> GetSortedByPlayedGamesDeckStats()
@@ -624,6 +910,8 @@
     private class DeckStats
     {
         public string DeckName { get; set; } = string.Empty;
+        public string LinkDeckName { get; set; } = string.Empty;
+        public List<DeckColorSymbol> ColorSymbols { get; set; } = new();
         public int TotalPlays { get; set; }
         public int Wins { get; set; }
         public int Losses { get; set; }
@@ -631,10 +919,11 @@
         public int FirstPlayerWins { get; set; }
         public int GoingSecondPlays { get; set; }
         public int GoingSecondWins { get; set; }
-        public DateTime? LastPlayed { get; set; }
 
         public double WinRate => TotalPlays > 0 ? (double)Wins / TotalPlays : 0;
         public double FirstPlayerWinRate => FirstPlayerPlays > 0 ? (double)FirstPlayerWins / FirstPlayerPlays : 0;
         public double GoingSecondWinRate => GoingSecondPlays > 0 ? (double)GoingSecondWins / GoingSecondPlays : 0;
     }
+
+    private record PlayerScoreColorEntry(PlayerScore Score, IReadOnlyList<string> ColorIdentityKeys);
 }

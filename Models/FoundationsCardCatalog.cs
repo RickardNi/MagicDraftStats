@@ -26,31 +26,7 @@ public static partial class FoundationsCardCatalog
         var colorCardCounts = new Dictionary<string, int>(StringComparer.Ordinal);
         var orderedColors = GetOrderedDeckColors(cards, colorCounts, colorCardCounts, sortByWeight: true);
 
-        if (orderedColors.Count == 0)
-        {
-            return "Colorless";
-        }
-
-        if (orderedColors.Count == 1)
-        {
-            return $"Mono {GetColorName(orderedColors[0])}";
-        }
-
-        if (orderedColors.Count == 2)
-        {
-            return GetTwoColorName(orderedColors[0], orderedColors[1]);
-        }
-
-        if (orderedColors.Count == 3)
-        {
-            var splashColor = orderedColors[2];
-            if (colorCardCounts.TryGetValue(splashColor, out var splashCards) && splashCards == 1)
-            {
-                return $"{GetTwoColorName(orderedColors[0], orderedColors[1])}+";
-            }
-        }
-
-        return string.Concat(orderedColors);
+        return ColorIdentityHelper.GetColorIdentityName(orderedColors, colorCardCounts);
     }
 
     public static IReadOnlyList<string> GetDeckColorIdentityKeys(IEnumerable<CardEntry> cards)
@@ -72,7 +48,7 @@ public static partial class FoundationsCardCatalog
                 && colorCardCounts.TryGetValue(color, out var colorCardCount)
                 && colorCardCount == 1))
             .OrderBy(symbol => symbol.IsSplash ? 1 : 0)
-            .ThenBy(symbol => GetColorOrder(symbol.ColorKey))
+            .ThenBy(symbol => ColorIdentityHelper.GetColorOrder(symbol.ColorKey))
             .ToList();
     }
 
@@ -108,54 +84,15 @@ public static partial class FoundationsCardCatalog
         {
             return colorCounts
                 .OrderByDescending(entry => entry.Value)
-                .ThenBy(entry => GetColorOrder(entry.Key))
+                .ThenBy(entry => ColorIdentityHelper.GetColorOrder(entry.Key))
                 .Select(entry => entry.Key)
                 .ToList();
         }
 
         return colorCounts
-            .OrderBy(entry => GetColorOrder(entry.Key))
+            .OrderBy(entry => ColorIdentityHelper.GetColorOrder(entry.Key))
             .Select(entry => entry.Key)
             .ToList();
-    }
-
-    private static int GetColorOrder(string color) => color switch
-    {
-        "W" => 0,
-        "U" => 1,
-        "B" => 2,
-        "R" => 3,
-        "G" => 4,
-        _ => 99
-    };
-
-    private static string GetColorName(string color) => color switch
-    {
-        "W" => "White",
-        "U" => "Blue",
-        "B" => "Black",
-        "R" => "Red",
-        "G" => "Green",
-        _ => "Colorless"
-    };
-
-    private static string GetTwoColorName(string colorA, string colorB)
-    {
-        var pair = string.Concat(new string[] { colorA, colorB }.OrderBy(GetColorOrder));
-        return pair switch
-        {
-            "WG" => "Selesnya",
-            "WR" => "Boros",
-            "WU" => "Azorius",
-            "WB" => "Orzhov",
-            "UG" => "Simic",
-            "UB" => "Dimir",
-            "UR" => "Izzet",
-            "BG" => "Golgari",
-            "BR" => "Rakdos",
-            "RG" => "Gruul",
-            _ => pair
-        };
     }
 
     private static bool HasType(IEnumerable<string> types, string typeName)
@@ -168,7 +105,6 @@ public static partial class FoundationsCardCatalog
 }
 
 public record FoundationsCardMetadata(int ManaValue, string[] Types, string[] ColorIdentity);
-public record DeckColorSymbol(string ColorKey, bool IsSplash);
 
 public static partial class FoundationsCardCatalog
 {

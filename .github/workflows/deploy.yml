@@ -41,13 +41,15 @@ jobs:
 
     - name: Setup Pages
       uses: actions/configure-pages@v4
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.repository.private
       
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.repository.private
       with:
         path: './publish/wwwroot'
         
     - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
-      if: github.ref == 'refs/heads/main' 
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main' && !github.event.repository.private

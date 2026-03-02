@@ -4,6 +4,7 @@
 @inject IBGStatsImportService BGStatsService
 @inject IGlobalFilterService GlobalFilterService
 @inject IDeckStatsService DeckStatsService
+@inject IDeckTableDataService DeckTableDataService
 
 <PageTitle>Magic Draft Stats - Player Details</PageTitle>
 
@@ -156,6 +157,25 @@
                 </div>
             </div>
         </div>
+
+        @if (associatedDeckRows.Any())
+        {
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-stack"></i>Decks
+                                <span class="text-muted ms-2">(@associatedDeckRows.Count)</span>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <DecksTable DeckRows="associatedDeckRows" EmptyMessage="No decks found for this player." />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
 
         <div class="row mb-4">
             <div class="col-12">
@@ -733,6 +753,7 @@
     private string currentOpponentDeckSort = "Plays";
     private bool opponentDeckSortAscending = false;
     private List<DeckStats> sortedOpponentDeckStats = new();
+    private List<DeckTableRow> associatedDeckRows = new();
 
     protected override void OnInitialized()
     {
@@ -777,8 +798,12 @@
             monoColorStats.Clear();
             headToHeadStats.Clear();
             opponentDeckStats.Clear();
+            associatedDeckRows.Clear();
 
             var plays = await BGStatsService.GetMagicPlaysAsync(GlobalFilterService.SelectedVariants);
+            var deckTableData = await DeckTableDataService.LoadAsync(plays);
+            associatedDeckRows = deckTableData.DeckRows.Where(deck => deck.PlayerId == playerId).ToList();
+
             playerPlays = plays.Where(p => p.PlayerScores.Any(ps => ps.PlayerRefId == playerId)).ToList();
             
             if (!playerPlays.Any())

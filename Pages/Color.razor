@@ -5,6 +5,7 @@
 @using System.Web
 @inject IBGStatsImportService BGStatsService
 @inject IGlobalFilterService GlobalFilterService
+@inject IDeckTableDataService DeckTableDataService
 
 <PageTitle>Magic Draft Stats - Color Details</PageTitle>
 
@@ -218,6 +219,21 @@
                 </div>
             </div>
         </div>
+
+        @if (associatedDeckRows.Any())
+        {
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-stack"></i>Decks
+                        <span class="text-muted ms-2">(@associatedDeckRows.Count)</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <DecksTable DeckRows="associatedDeckRows" EmptyMessage="No decks found for this color combination." />
+                </div>
+            </div>
+        }
 
         <div class="card mb-4">
             <div class="card-header">
@@ -496,6 +512,7 @@
     private double? averageDuration;
     private List<MatchupStats> matchupStats = new();
     private List<Play> deckPlays = new();
+    private List<DeckTableRow> associatedDeckRows = new();
     private HashSet<string> highlightedColorScoreKeys = new(StringComparer.Ordinal);
     private List<PlayerStats> playerStats = new();
     private ApexChartOptions<FirstPlayerStats> firstPlayerChartOptions = new();
@@ -548,6 +565,7 @@
             matchupStats.Clear();
             averageDuration = null;
             deckPlays.Clear();
+            associatedDeckRows.Clear();
             highlightedColorScoreKeys.Clear();
             playerStats.Clear();
             firstPlayerStats.Clear();
@@ -567,6 +585,11 @@
             colorIdentitySymbols = targetColorKeys.Select(color => new DeckColorSymbol(color, false)).ToList();
 
             var plays = await BGStatsService.GetMagicPlaysAsync(GlobalFilterService.SelectedVariants);
+            var deckTableData = await DeckTableDataService.LoadAsync(plays);
+            associatedDeckRows = deckTableData.DeckRows
+                .Where(row => HasExactColorIdentity(row.ColorSymbols, targetColorKeys))
+                .ToList();
+
             var matchedScores = plays
                 .SelectMany(play => play.PlayerScores.Select(score => new MatchedColorScore(
                     play,
@@ -809,6 +832,22 @@
         }
 
         return actualColors.SequenceEqual(targetColors, StringComparer.Ordinal);
+    }
+
+    private static bool HasExactColorIdentity(IReadOnlyList<DeckColorSymbol> deckSymbols, IReadOnlyList<string> targetColorKeys)
+    {
+        var normalizedDeckKeys = deckSymbols
+            .Select(symbol => symbol.ColorKey)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(ColorIdentityHelper.GetColorOrder)
+            .ToList();
+
+        var normalizedTargetKeys = targetColorKeys
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(ColorIdentityHelper.GetColorOrder)
+            .ToList();
+
+        return normalizedDeckKeys.SequenceEqual(normalizedTargetKeys, StringComparer.Ordinal);
     }
 
     private static string BuildColorIdentityKey(IReadOnlyList<string> colorIdentityKeys)

@@ -6,9 +6,11 @@ public interface IGlobalFilterService
     HashSet<string> SelectedVariants { get; }
     HashSet<string> SelectedSets { get; }
     bool IncludeUndefinedSets { get; }
+    bool IncludeRegularDraft { get; }
     void SetVariantFilter(HashSet<string> variants);
     void SetSetFilter(HashSet<string> sets);
     void SetIncludeUndefinedSets(bool includeUndefinedSets);
+    void SetIncludeRegularDraft(bool includeRegularDraft);
     void SetAllAvailableVariants(IEnumerable<string> variants);
     void SetAllAvailableSets(IEnumerable<string> sets);
     void ClearVariantFilter();
@@ -22,12 +24,14 @@ public class GlobalFilterService : IGlobalFilterService
     private HashSet<string> _selectedVariants = [];
     private HashSet<string> _selectedSets = [];
     private bool _includeUndefinedSets;
+    private bool _includeRegularDraft;
 
     public event Action? OnFilterChanged;
 
     public HashSet<string> SelectedVariants => [.. _selectedVariants];
     public HashSet<string> SelectedSets => [.. _selectedSets];
     public bool IncludeUndefinedSets => _includeUndefinedSets;
+    public bool IncludeRegularDraft => _includeRegularDraft;
 
     public void SetVariantFilter(HashSet<string> variants)
     {
@@ -44,6 +48,12 @@ public class GlobalFilterService : IGlobalFilterService
     public void SetIncludeUndefinedSets(bool includeUndefinedSets)
     {
         _includeUndefinedSets = includeUndefinedSets;
+        OnFilterChanged?.Invoke();
+    }
+
+    public void SetIncludeRegularDraft(bool includeRegularDraft)
+    {
+        _includeRegularDraft = includeRegularDraft;
         OnFilterChanged?.Invoke();
     }
 

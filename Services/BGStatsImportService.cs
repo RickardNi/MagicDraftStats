@@ -44,10 +44,11 @@ public class BGStatsImportService(HttpClient httpClient, ILogger<BGStatsImportSe
             var selectedVariants = variantFilter ?? _globalFilterService.SelectedVariants;
             var selectedSets = _globalFilterService.SelectedSets;
             var includeUndefinedSets = _globalFilterService.IncludeUndefinedSets;
+            var includeRegularDraft = _globalFilterService.IncludeRegularDraft;
 
             var filteredPlays = _cachedData.Plays
                 .Where(p => IsPlayIncludedBySetFilters(p, selectedSets, includeUndefinedSets))
-                .Where(p => IsPlayIncludedByVariantFilters(p, selectedVariants))
+                .Where(p => IsPlayIncludedByVariantFilters(p, selectedVariants, includeRegularDraft))
                 .ToList();
 
             return filteredPlays;
@@ -367,6 +368,7 @@ public class BGStatsImportService(HttpClient httpClient, ILogger<BGStatsImportSe
         _globalFilterService.SetAllAvailableVariants(allVariantTokens);
         _globalFilterService.SetAllAvailableSets(VariantDefinitions.SetVariants);
         _globalFilterService.SetIncludeUndefinedSets(false);
+        _globalFilterService.SetIncludeRegularDraft(true);
     }
 
     private static bool IsPlayIncludedBySetFilters(Play play, HashSet<string> selectedSets, bool includeUndefinedSets)
@@ -383,9 +385,9 @@ public class BGStatsImportService(HttpClient httpClient, ILogger<BGStatsImportSe
         return setTokens.Any(selectedSets.Contains);
     }
 
-    private static bool IsPlayIncludedByVariantFilters(Play play, HashSet<string> selectedVariants)
+    private static bool IsPlayIncludedByVariantFilters(Play play, HashSet<string> selectedVariants, bool includeRegularDraft)
     {
-        if (selectedVariants.Count == 0)
+        if (selectedVariants.Count == 0 && !includeRegularDraft)
             return false;
 
         var variantTokens = VariantDefinitions.SplitVariantTokens(play.Variant)
@@ -394,7 +396,7 @@ public class BGStatsImportService(HttpClient httpClient, ILogger<BGStatsImportSe
             .ToList();
 
         if (variantTokens.Count == 0)
-            return false;
+            return includeRegularDraft;
 
         return variantTokens.Any(selectedVariants.Contains);
     }

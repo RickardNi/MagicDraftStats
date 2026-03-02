@@ -42,18 +42,102 @@
                     <table class="table table-striped table-hover align-middle">
                         <thead>
                             <tr>
-                                <th>Deck</th>
+                                <th>
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.DeckName)">
+                                        Deck
+                                        @if (currentSortColumn == SortColumn.DeckName)
+                                        {
+                                            <i class="bi @(isAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-sort text-muted"></i>
+                                        }
+                                    </button>
+                                </th>
                                 <th></th>
-                                <th>Player</th>
-                                <th>Date</th>
-                                <th class="text-center">Rank</th>
-                                <th class="text-center">Plays</th>
-                                <th class="text-center">Wins</th>
-                                <th class="text-center">Losses</th>
+                                <th>
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.PlayerName)">
+                                        Player
+                                        @if (currentSortColumn == SortColumn.PlayerName)
+                                        {
+                                            <i class="bi @(isAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-sort text-muted"></i>
+                                        }
+                                    </button>
+                                </th>
+                                <th>
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Date)">
+                                        Date
+                                        @if (currentSortColumn == SortColumn.Date)
+                                        {
+                                            <i class="bi @(isAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-sort text-muted"></i>
+                                        }
+                                    </button>
+                                </th>
+                                <th class="text-center">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Rank)">
+                                        Rank
+                                        @if (currentSortColumn == SortColumn.Rank)
+                                        {
+                                            <i class="bi @(isAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-sort text-muted"></i>
+                                        }
+                                    </button>
+                                </th>
+                                <th class="text-center">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Plays)">
+                                        Plays
+                                        @if (currentSortColumn == SortColumn.Plays)
+                                        {
+                                            <i class="bi @(isAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-sort text-muted"></i>
+                                        }
+                                    </button>
+                                </th>
+                                <th class="text-center">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Wins)">
+                                        Wins
+                                        @if (currentSortColumn == SortColumn.Wins)
+                                        {
+                                            <i class="bi @(isAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-sort text-muted"></i>
+                                        }
+                                    </button>
+                                </th>
+                                <th class="text-center">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Losses)">
+                                        Losses
+                                        @if (currentSortColumn == SortColumn.Losses)
+                                        {
+                                            <i class="bi @(isAscending ? "bi-sort-up" : "bi-sort-down")"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-sort text-muted"></i>
+                                        }
+                                    </button>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var deck in deckRows)
+                            @foreach (var deck in GetSortedDeckRows())
                             {
                                 <tr style="cursor: pointer;" @onclick="() => OpenDeck(deck.DeckId)">
                                     <td>
@@ -154,6 +238,19 @@
     private string? errorMessage;
     private List<DeckRow> deckRows = new();
     private List<ValidationIssue> validationIssues = new();
+    private SortColumn currentSortColumn = SortColumn.Date;
+    private bool isAscending = false;
+
+    private enum SortColumn
+    {
+        DeckName,
+        PlayerName,
+        Date,
+        Rank,
+        Plays,
+        Wins,
+        Losses
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -226,6 +323,53 @@
     private void OpenDeck(string deckId)
     {
         NavigationManager.NavigateTo($"deck/{Uri.EscapeDataString(deckId)}");
+    }
+
+    private void SortBy(SortColumn column)
+    {
+        if (currentSortColumn == column)
+        {
+            isAscending = !isAscending;
+        }
+        else
+        {
+            currentSortColumn = column;
+            isAscending = false;
+        }
+    }
+
+    private IEnumerable<DeckRow> GetSortedDeckRows()
+    {
+        var query = currentSortColumn switch
+        {
+            SortColumn.DeckName => isAscending
+                ? deckRows.OrderBy(deck => deck.DeckName)
+                : deckRows.OrderByDescending(deck => deck.DeckName),
+            SortColumn.PlayerName => isAscending
+                ? deckRows.OrderBy(deck => deck.PlayerName)
+                : deckRows.OrderByDescending(deck => deck.PlayerName),
+            SortColumn.Date => isAscending
+                ? deckRows.OrderBy(deck => deck.Date)
+                : deckRows.OrderByDescending(deck => deck.Date),
+            SortColumn.Rank => isAscending
+                ? deckRows.OrderBy(deck => deck.Rank)
+                : deckRows.OrderByDescending(deck => deck.Rank),
+            SortColumn.Plays => isAscending
+                ? deckRows.OrderBy(deck => deck.Plays)
+                : deckRows.OrderByDescending(deck => deck.Plays),
+            SortColumn.Wins => isAscending
+                ? deckRows.OrderBy(deck => deck.Wins)
+                : deckRows.OrderByDescending(deck => deck.Wins),
+            SortColumn.Losses => isAscending
+                ? deckRows.OrderBy(deck => deck.Losses)
+                : deckRows.OrderByDescending(deck => deck.Losses),
+            _ => deckRows.OrderByDescending(deck => deck.Date)
+        };
+
+        return query
+            .ThenByDescending(deck => deck.Date)
+            .ThenByDescending(deck => deck.Wins)
+            .ThenBy(deck => deck.PlayerName);
     }
 
     private class DeckRow

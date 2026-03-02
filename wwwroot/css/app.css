@@ -234,6 +234,14 @@ a, .btn-link {
     color: #495057;
 }
 
+.table th .btn.btn-link:focus,
+.table th .btn.btn-link:focus-visible,
+.table th .btn.btn-link:active {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
+}
+
 /* Keep definition-list labels/values vertically centered in row-based stats blocks */
 dl.row > dt,
 dl.row > dd {

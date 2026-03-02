@@ -1,0 +1,7 @@
+.mana-symbol-group {
+    min-width: fit-content;
+}
+
+.mana-symbol-group-dimmed {
+    opacity: 0.2;
+}

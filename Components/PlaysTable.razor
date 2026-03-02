@@ -52,10 +52,11 @@ else
                             @if (winner != null)
                             {
                                 var winnerColorSymbols = ColorIdentityHelper.GetRoleColorSymbols(winner.Deck);
+                                var isWinnerHighlighted = IsScoreHighlighted(play, winner);
 
                                 @if (winnerColorSymbols.Count > 0)
                                 {
-                                    <div class="d-flex align-items-center gap-1" style="min-width: fit-content;">
+                                    <div class="d-flex align-items-center gap-1 mana-symbol-group @(isWinnerHighlighted ? string.Empty : "mana-symbol-group-dimmed")">
                                         @foreach (var symbol in winnerColorSymbols)
                                         {
                                             <ColorChip ColorKey="@symbol.ColorKey" />
@@ -92,10 +93,11 @@ else
                             @if (loser != null)
                             {
                                 var loserColorSymbols = ColorIdentityHelper.GetRoleColorSymbols(loser.Deck);
+                                var isLoserHighlighted = IsScoreHighlighted(play, loser);
 
                                 @if (loserColorSymbols.Count > 0)
                                 {
-                                    <div class="d-flex align-items-center gap-1" style="min-width: fit-content;">
+                                    <div class="d-flex align-items-center gap-1 mana-symbol-group @(isLoserHighlighted ? string.Empty : "mana-symbol-group-dimmed")">
                                         @foreach (var symbol in loserColorSymbols)
                                         {
                                             <ColorChip ColorKey="@symbol.ColorKey" />
@@ -130,10 +132,20 @@ else
     {
         if (HighlightScoreKeys != null)
         {
-            return HighlightScoreKeys.Contains(BuildPlayScoreKey(play, score)) ? "fw-bold" : string.Empty;
+            return IsScoreHighlighted(play, score) ? "fw-bold" : string.Empty;
         }
 
         return string.Empty;
+    }
+
+    private bool IsScoreHighlighted(Play play, PlayerScore score)
+    {
+        if (HighlightScoreKeys == null)
+        {
+            return true;
+        }
+
+        return HighlightScoreKeys.Contains(BuildPlayScoreKey(play, score));
     }
 
     private static string BuildPlayScoreKey(Play play, PlayerScore score)

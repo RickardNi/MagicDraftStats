@@ -4,6 +4,7 @@
 @using MagicDraftStats.Models
 @inject IBGStatsImportService BGStatsService
 @inject IGlobalFilterService GlobalFilterService
+@inject IDeckStatsService DeckStatsService
 
 <PageTitle>Magic Draft Stats</PageTitle>
 
@@ -91,16 +92,130 @@
                         @if (plays.Any())
                         {
                             var longestGame = plays.OrderByDescending(p => p.DurationInMinutes).First();
-                            var mostPlayedDeck = plays.SelectMany(p => p.PlayerScores)
-                                                     .GroupBy(ps => ps.Deck)
-                                                     .OrderByDescending(g => g.Count())
-                                                     .First();
+                            var allColorEntries = DeckStatsService.BuildPlayerScoreColorEntries(plays, _ => true);
+                            var colorIdentityStats = DeckStatsService.AggregateByColorIdentity(allColorEntries, entry => entry.Score.IsWinner);
+                            var monoColorStats = DeckStatsService.AggregateMonoColorInclusion(allColorEntries, entry => entry.Score.IsWinner);
+
+                            var mostPlayedColors = colorIdentityStats
+                                .OrderByDescending(stat => stat.Plays)
+                                .ThenBy(stat => stat.ColorIdentityName, StringComparer.Ordinal)
+                                .FirstOrDefault();
+
+                            var mostSuccessfulColors = colorIdentityStats
+                                .Where(stat => stat.Plays >= 2)
+                                .OrderByDescending(stat => stat.WinRate)
+                                .ThenByDescending(stat => stat.Plays)
+                                .ThenBy(stat => stat.ColorIdentityName, StringComparer.Ordinal)
+                                .FirstOrDefault();
+
+                            var mostPlayedColor = monoColorStats
+                                .OrderByDescending(stat => stat.Plays)
+                                .ThenBy(GetPrimaryColorOrder)
+                                .FirstOrDefault();
+
+                            var mostSuccessfulColor = monoColorStats
+                                .Where(stat => stat.Plays >= 2)
+                                .OrderByDescending(stat => stat.WinRate)
+                                .ThenByDescending(stat => stat.Plays)
+                                .ThenBy(GetPrimaryColorOrder)
+                                .FirstOrDefault();
                             
                             <p><strong>Average Duration:</strong> @plays.Average(p => p.DurationInMinutes).ToString("F1") minutes</p>
                             <p><strong>Longest Game:</strong> @longestGame.DurationInMinutes minutes</p>
                             <p><strong>Total Play Time:</strong> @Utilities.FormatTotalPlayTime(plays.Sum(p => p.DurationInMinutes))</p>
                             <hr />
-                            <p><strong>Most Common Deck:</strong> <NavLink class="deck-link" href="@Utilities.GetDeckUrl(mostPlayedDeck.Key)">@mostPlayedDeck.Key</NavLink> (@mostPlayedDeck.Count() plays)</p>
+                            <p>
+                                <strong>Most Common Colors:</strong>
+                                @if (mostPlayedColors is not null)
+                                {
+                                    <span class="d-inline-flex align-items-center gap-1 flex-wrap ms-1">
+                                        <NavLink class="deck-link" href="@Utilities.GetDeckUrl(mostPlayedColors.LinkDeckName)">@mostPlayedColors.ColorIdentityName</NavLink>
+                                        @if (mostPlayedColors.ColorSymbols.Count > 0)
+                                        {
+                                            <span class="d-inline-flex align-items-center gap-1 ms-1">
+                                                @foreach (var symbol in mostPlayedColors.ColorSymbols)
+                                                {
+                                                    <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                                }
+                                            </span>
+                                        }
+                                        <span class="text-muted ms-1">(@mostPlayedColors.Plays plays)</span>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted ms-1">-</span>
+                                }
+                            </p>
+                            <p>
+                                <strong>Most Played Color:</strong>
+                                @if (mostPlayedColor is not null)
+                                {
+                                    <span class="d-inline-flex align-items-center gap-1 flex-wrap ms-1">
+                                        <NavLink class="deck-link" href="@Utilities.GetDeckUrl(mostPlayedColor.LinkDeckName)">@mostPlayedColor.ColorIdentityName</NavLink>
+                                        @if (mostPlayedColor.ColorSymbols.Count > 0)
+                                        {
+                                            <span class="d-inline-flex align-items-center gap-1 ms-1">
+                                                @foreach (var symbol in mostPlayedColor.ColorSymbols)
+                                                {
+                                                    <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                                }
+                                            </span>
+                                        }
+                                        <span class="text-muted ms-1">(@mostPlayedColor.Plays plays)</span>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted ms-1">-</span>
+                                }
+                            </p>
+                            <p>
+                                <strong>Most Successful Colors:</strong>
+                                @if (mostSuccessfulColors is not null)
+                                {
+                                    <span class="d-inline-flex align-items-center gap-1 flex-wrap ms-1">
+                                        <NavLink class="deck-link" href="@Utilities.GetDeckUrl(mostSuccessfulColors.LinkDeckName)">@mostSuccessfulColors.ColorIdentityName</NavLink>
+                                        @if (mostSuccessfulColors.ColorSymbols.Count > 0)
+                                        {
+                                            <span class="d-inline-flex align-items-center gap-1 ms-1">
+                                                @foreach (var symbol in mostSuccessfulColors.ColorSymbols)
+                                                {
+                                                    <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                                }
+                                            </span>
+                                        }
+                                        <span class="ms-1 @Utilities.GetWinRateColorForPlayer(mostSuccessfulColors.WinRate)">(@Utilities.FormatWinRate(mostSuccessfulColors.WinRate))</span>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted ms-1">-</span>
+                                }
+                            </p>
+                            <p>
+                                <strong>Most Successful Color:</strong>
+                                @if (mostSuccessfulColor is not null)
+                                {
+                                    <span class="d-inline-flex align-items-center gap-1 flex-wrap ms-1">
+                                        <NavLink class="deck-link" href="@Utilities.GetDeckUrl(mostSuccessfulColor.LinkDeckName)">@mostSuccessfulColor.ColorIdentityName</NavLink>
+                                        @if (mostSuccessfulColor.ColorSymbols.Count > 0)
+                                        {
+                                            <span class="d-inline-flex align-items-center gap-1 ms-1">
+                                                @foreach (var symbol in mostSuccessfulColor.ColorSymbols)
+                                                {
+                                                    <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                                }
+                                            </span>
+                                        }
+                                        <span class="ms-1 @Utilities.GetWinRateColorForPlayer(mostSuccessfulColor.WinRate)">(@Utilities.FormatWinRate(mostSuccessfulColor.WinRate))</span>
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted ms-1">-</span>
+                                }
+                            </p>
                         }
                         else
                         {
@@ -366,6 +481,12 @@
     private string GetPointColor(FirstPlayerStats stats)
     {
         return stats.Result == "Wins" ? "#28a745" : "#dc3545";
+    }
+
+    private static int GetPrimaryColorOrder(ColorIdentityStatRow stat)
+    {
+        var primaryColorKey = stat.ColorIdentityKeys.FirstOrDefault();
+        return primaryColorKey is null ? int.MaxValue : ColorIdentityHelper.GetColorOrder(primaryColorKey);
     }
 
     private void GoToPage(int page)

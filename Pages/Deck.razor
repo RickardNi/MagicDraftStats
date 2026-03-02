@@ -3,6 +3,7 @@
 @using MagicDraftStats.Services
 @inject IDeckImportService DeckImportService
 @inject IBGStatsImportService BGStatsService
+@inject IDeckStatsService DeckStatsService
 
 <PageTitle>Magic Draft Stats - Deck Details</PageTitle>
 
@@ -72,11 +73,18 @@
                     <div class="card-body">
                         <dl class="row mb-0">
                             <dt class="col-sm-5">Plays</dt>
-                            <dd class="col-sm-7">0</dd>
+                            <dd class="col-sm-7">@deckPlayCount</dd>
                             <dt class="col-sm-5">Wins</dt>
-                            <dd class="col-sm-7 text-success fw-bold">0</dd>
+                            <dd class="col-sm-7 text-success fw-bold">@deckWinCount</dd>
                             <dt class="col-sm-5">Losses</dt>
-                            <dd class="col-sm-7 text-danger">0</dd>
+                            <dd class="col-sm-7 text-danger">@deckLossCount</dd>
+                        </dl>
+                        <hr class="my-3" />
+                        <dl class="row mb-0">
+                            <dt class="col-sm-5">First Player Win Rate</dt>
+                            <dd class="col-sm-7 @GetWinRateClass(firstPlayerWinRate)">@FormatNullableWinRate(firstPlayerWinRate)</dd>
+                            <dt class="col-sm-5">Going Second Win Rate</dt>
+                            <dd class="col-sm-7 @GetWinRateClass(goingSecondWinRate)">@FormatNullableWinRate(goingSecondWinRate)</dd>
                         </dl>
                         <hr class="my-3" />
                         <dl class="row mb-0">
@@ -200,6 +208,11 @@
     private List<Play> deckPlays = new();
     private ApexChartOptions<FirstPlayerStats> firstPlayerChartOptions = new();
     private List<FirstPlayerStats> firstPlayerStats = new();
+    private int deckPlayCount = 0;
+    private int deckWinCount = 0;
+    private int deckLossCount = 0;
+    private double? firstPlayerWinRate;
+    private double? goingSecondWinRate;
     private int lossesAsFirstPlayer = 0;
     private int lossesAsNonFirstPlayer = 0;
     private ApexChartOptions<FirstPlayerStats> goingSecondChartOptions = new();
@@ -225,6 +238,15 @@
             playerName = "-";
             playerId = 0;
             deckPlays.Clear();
+            deckPlayCount = 0;
+            deckWinCount = 0;
+            deckLossCount = 0;
+            winsAsFirstPlayer = 0;
+            lossesAsFirstPlayer = 0;
+            winsAsNonFirstPlayer = 0;
+            lossesAsNonFirstPlayer = 0;
+            firstPlayerWinRate = null;
+            goingSecondWinRate = null;
 
             await InvokeAsync(StateHasChanged);
 
@@ -250,6 +272,19 @@
 
             var bgStatsData = await BGStatsService.GetCurrentDataAsync();
             playerName = bgStatsData?.Players?.FirstOrDefault(player => player.Id == deckFile.PlayerRefId)?.Name ?? $"Player #{deckFile.PlayerRefId}";
+            var deckStats = DeckStatsService.CalculateDeckStats(deckFile, bgStatsData?.Plays ?? []);
+
+            deckPlays = deckStats.MatchedPlays.ToList();
+            deckPlayCount = deckStats.Plays;
+            deckWinCount = deckStats.Wins;
+            deckLossCount = deckStats.Losses;
+            winsAsFirstPlayer = deckStats.WinsAsFirstPlayer;
+            lossesAsFirstPlayer = deckStats.LossesAsFirstPlayer;
+            winsAsNonFirstPlayer = deckStats.WinsAsNonFirstPlayer;
+            lossesAsNonFirstPlayer = deckStats.LossesAsNonFirstPlayer;
+            firstPlayerWinRate = deckStats.FirstPlayerWinRate;
+            goingSecondWinRate = deckStats.GoingSecondWinRate;
+
             var dateText = deckFile.Date?.ToString("yyyy-MM-dd") ?? Path.GetFileNameWithoutExtension(deckItem.FilePath);
             var colorIdentityName = FoundationsCardCatalog.GetDeckColorIdentityName(deckFile.Cards);
             displayDeckTitle = $"[{dateText}] {colorIdentityName}";
@@ -346,6 +381,16 @@
     private string GetPointColor(FirstPlayerStats stats)
     {
         return stats.Result == "Wins" ? "#28a745" : "#dc3545";
+    }
+
+    private static string FormatNullableWinRate(double? winRate)
+    {
+        return winRate.HasValue ? Utilities.FormatWinRate(winRate.Value) : "-";
+    }
+
+    private static string GetWinRateClass(double? winRate)
+    {
+        return winRate.HasValue ? $"fw-bold {Utilities.GetWinRateColorForDeck(winRate.Value)}" : "text-muted";
     }
 
     public class FirstPlayerStats

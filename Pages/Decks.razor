@@ -3,6 +3,7 @@
 @using MagicDraftStats.Services
 @inject IDeckImportService DeckImportService
 @inject IBGStatsImportService BGStatsService
+@inject IDeckStatsService DeckStatsService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Magic Draft Stats - Decks</PageTitle>
@@ -96,9 +97,9 @@
                                     <td class="text-center">
                                         <span class="fw-bold @(deck.Rank == 1 ? "text-success-dark" : "text-warning")">@(deck.Rank?.ToString() ?? "-")</span>
                                     </td>
-                                    <td class="text-center">0</td>
-                                    <td class="text-center"><span class="text-success fw-bold">0</span></td>
-                                    <td class="text-center"><span class="text-danger">0</span></td>
+                                    <td class="text-center">@deck.Plays</td>
+                                    <td class="text-center"><span class="text-success fw-bold">@deck.Wins</span></td>
+                                    <td class="text-center"><span class="text-danger">@deck.Losses</span></td>
                                 </tr>
                             }
                         </tbody>
@@ -172,18 +173,27 @@
             var playerLookup = bgStatsData?.Players?
                 .ToDictionary(player => player.Id, player => player.Name)
                 ?? new Dictionary<int, string>();
+            var allPlays = bgStatsData?.Plays ?? [];
 
             deckRows = importResult.Items
                 .Where(item => item.Deck != null)
-                .Select(item => new DeckRow
+                .Select(item =>
                 {
-                    DeckId = Path.GetFileNameWithoutExtension(item.FilePath),
-                    Date = item.Deck!.Date,
-                    DeckName = FoundationsCardCatalog.GetDeckColorIdentityName(item.Deck!.Cards),
-                    ColorSymbols = FoundationsCardCatalog.GetDeckColorIdentitySymbols(item.Deck!.Cards).ToList(),
-                    PlayerId = item.Deck.PlayerRefId,
-                    PlayerName = playerLookup.TryGetValue(item.Deck.PlayerRefId, out var playerName) ? playerName : $"Player #{item.Deck.PlayerRefId}",
-                    Rank = item.Deck.Rank
+                    var deck = item.Deck!;
+                    var stats = DeckStatsService.CalculateDeckStats(deck, allPlays);
+                    return new DeckRow
+                    {
+                        DeckId = Path.GetFileNameWithoutExtension(item.FilePath),
+                        Date = deck.Date,
+                        DeckName = FoundationsCardCatalog.GetDeckColorIdentityName(deck.Cards),
+                        ColorSymbols = FoundationsCardCatalog.GetDeckColorIdentitySymbols(deck.Cards).ToList(),
+                        PlayerId = deck.PlayerRefId,
+                        PlayerName = playerLookup.TryGetValue(deck.PlayerRefId, out var playerName) ? playerName : $"Player #{deck.PlayerRefId}",
+                        Rank = deck.Rank,
+                        Plays = stats.Plays,
+                        Wins = stats.Wins,
+                        Losses = stats.Losses
+                    };
                 })
                 .OrderByDescending(deck => deck.Date)
                 .ThenBy(deck => deck.PlayerName)
@@ -226,6 +236,9 @@
         public int PlayerId { get; set; }
         public string PlayerName { get; set; } = string.Empty;
         public int? Rank { get; set; }
+        public int Plays { get; set; }
+        public int Wins { get; set; }
+        public int Losses { get; set; }
     }
 
     private class ValidationIssue

@@ -11,6 +11,7 @@ builder.Services.AddSingleton(sp => new HttpClient { BaseAddress = new Uri(build
 builder.Services.AddSingleton<IBGStatsImportService, BGStatsImportService>();
 builder.Services.AddSingleton<IGlobalFilterService, GlobalFilterService>();
 builder.Services.AddSingleton<IDeckImportService, DeckImportService>();
+builder.Services.AddSingleton<IDeckStatsService, DeckStatsService>();
 builder.Services.AddSingleton<IScryfallCardService, ScryfallCardService>();
 
 await builder.Build().RunAsync();

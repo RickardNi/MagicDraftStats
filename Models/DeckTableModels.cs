@@ -9,6 +9,7 @@ public class DeckTableRow
     public int PlayerId { get; set; }
     public string PlayerName { get; set; } = string.Empty;
     public int Rank { get; set; }
+    public int PlayerCount { get; set; }
     public int Plays { get; set; }
     public int Wins { get; set; }
     public int Losses { get; set; }

@@ -49,6 +49,7 @@ public sealed class DeckTableDataService : IDeckTableDataService
                     PlayerId = deck.PlayerRefId,
                     PlayerName = playerLookup.TryGetValue(deck.PlayerRefId, out var playerName) ? playerName : $"Player #{deck.PlayerRefId}",
                     Rank = deck.Rank,
+                    PlayerCount = deck.PlayerCount,
                     Plays = stats.Plays,
                     Wins = stats.Wins,
                     Losses = stats.Losses

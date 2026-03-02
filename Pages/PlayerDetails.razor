@@ -3,6 +3,7 @@
 @using MagicDraftStats.Services
 @inject IBGStatsImportService BGStatsService
 @inject IGlobalFilterService GlobalFilterService
+@inject IDeckStatsService DeckStatsService
 
 <PageTitle>Magic Draft Stats - Player Details</PageTitle>
 
@@ -43,7 +44,7 @@
                         <dl class="row mb-0">
                             <dt class="col-sm-5">Total Plays</dt>
                             <dd class="col-sm-7">@playerStats.TotalPlays (<span class="text-success">@playerStats.Wins W</span> / <span class="text-danger">@playerStats.Losses L</span>)</dd>
-                            <dt class="col-sm-5">Decks played</dt>
+                            <dt class="col-sm-5">Colors played</dt>
                             <dd class="col-sm-7">@uniqueDecksCount</dd>
                             <dt class="col-sm-5">Win Rate</dt>
                             <dd class="col-sm-7 @(Utilities.GetWinRateColorForPlayer(playerStats.WinRate))">@Utilities.FormatWinRate(playerStats.WinRate)</dd>
@@ -58,24 +59,46 @@
                         </dl>
                         <hr class="my-3" />
                         <dl class="row mb-0">
-                            <dt class="col-sm-5">Most Played Deck</dt>
+                            <dt class="col-sm-5">Most Played Color Combination</dt>
                             <dd class="col-sm-7">
-                                @if (mostPlayedDeck != null)
+                                @if (mostPlayedColorStats is not null)
                                 {
-                                    <NavLink class="deck-link" href="@Utilities.GetDeckUrl(mostPlayedDeck)">@mostPlayedDeck</NavLink>
-                                    <span> (@mostPlayedDeckPlays plays)</span>
+                                    <span class="d-inline-flex align-items-center gap-1 flex-wrap">
+                                        <NavLink class="deck-link" href="@Utilities.GetDeckUrl(mostPlayedColorStats.LinkDeckName)">@mostPlayedColorStats.DeckName</NavLink>
+                                        @if (mostPlayedColorStats.ColorSymbols.Count > 0)
+                                        {
+                                            <span class="d-inline-flex align-items-center gap-1 ms-1">
+                                                @foreach (var symbol in mostPlayedColorStats.ColorSymbols)
+                                                {
+                                                    <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                                }
+                                            </span>
+                                        }
+                                        <span class="text-muted">(@mostPlayedColorStats.Plays plays)</span>
+                                    </span>
                                 }
                                 else
                                 {
                                     <span>-</span>
                                 }
                             </dd>
-                            <dt class="col-sm-5">Most Successful Deck</dt>
+                            <dt class="col-sm-5">Most Successful Color Combination</dt>
                             <dd class="col-sm-7">
-                                @if (mostSuccessfulDeck != null)
+                                @if (mostSuccessfulColorStats is not null)
                                 {
-                                    <NavLink class="deck-link" href="@Utilities.GetDeckUrl(mostSuccessfulDeck)">@mostSuccessfulDeck</NavLink>
-                                    <span> (@Utilities.FormatWinRate(mostSuccessfulDeckWinRate))</span>
+                                    <span class="d-inline-flex align-items-center gap-1 flex-wrap">
+                                        <NavLink class="deck-link" href="@Utilities.GetDeckUrl(mostSuccessfulColorStats.LinkDeckName)">@mostSuccessfulColorStats.DeckName</NavLink>
+                                        @if (mostSuccessfulColorStats.ColorSymbols.Count > 0)
+                                        {
+                                            <span class="d-inline-flex align-items-center gap-1 ms-1">
+                                                @foreach (var symbol in mostSuccessfulColorStats.ColorSymbols)
+                                                {
+                                                    <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                                }
+                                            </span>
+                                        }
+                                        <span class="@Utilities.GetWinRateColorForPlayer(mostSuccessfulColorStats.WinRate)">(@Utilities.FormatWinRate(mostSuccessfulColorStats.WinRate))</span>
+                                    </span>
                                 }
                                 else
                                 {
@@ -93,7 +116,7 @@
                 <div class="card">
                     <div class="card-header">
                         <h5 class="card-title mb-0">
-                            <i class="bi bi-stack"></i>Decks Played
+                            <i class="bi bi-palette"></i>Colors Played
                         </h5>
                     </div>
                     <div class="card-body">
@@ -105,7 +128,7 @@
                                         <tr>
                                             <th>
                                                 <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="@(() => SortBy("Deck"))">
-                                                    Name
+                                                    Colors
                                                     @if (currentSort == "Deck")
                                                     {
                                                         <i class="bi @(sortAscending ? "bi-sort-up" : "bi-sort-down")"></i>
@@ -116,6 +139,7 @@
                                                     }
                                                 </button>
                                             </th>
+                                            <th></th>
                                             <th class="text-center">
                                                 <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="@(() => SortBy("Plays"))">
                                                     Plays
@@ -188,7 +212,22 @@
                                         {
                                             <tr>
                                                 <td>
-                                                    <NavLink class="deck-link" href="@Utilities.GetDeckUrl(deck.DeckName)">@deck.DeckName</NavLink>
+                                                    <NavLink class="deck-link" href="@Utilities.GetDeckUrl(deck.LinkDeckName)">@deck.DeckName</NavLink>
+                                                </td>
+                                                <td>
+                                                    @if (deck.ColorSymbols.Count > 0)
+                                                    {
+                                                        <div class="d-flex align-items-center gap-1" style="min-width: fit-content;">
+                                                            @foreach (var symbol in deck.ColorSymbols)
+                                                            {
+                                                                <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                                            }
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
                                                 </td>
                                                 <td class="text-center">@deck.Plays</td>
                                                 <td class="text-center @(Utilities.GetWinRateColorForPlayer(deck.WinRate))">@Utilities.FormatWinRate(deck.WinRate)</td>
@@ -203,7 +242,7 @@
                         }
                         else
                         {
-                            <p class="text-muted mb-0">No deck data available.</p>
+                            <p class="text-muted mb-0">No color data available.</p>
                         }
                     </div>
                 </div>
@@ -323,7 +362,7 @@
                 <div class="card">
                     <div class="card-header">
                         <h5 class="card-title mb-0">
-                            <i class="bi bi-shield-fill"></i>Decks Played Against
+                            <i class="bi bi-shield-fill"></i>Colors Played Against
                         </h5>
                     </div>
                     <div class="card-body">
@@ -335,7 +374,7 @@
                                         <tr>
                                             <th>
                                                 <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="@(() => SortByOpponentDeck("Deck"))">
-                                                    Opponent Deck
+                                                    Opponent Colors
                                                     @if (currentOpponentDeckSort == "Deck")
                                                     {
                                                         <i class="bi @(opponentDeckSortAscending ? "bi-sort-up" : "bi-sort-down")"></i>
@@ -346,6 +385,7 @@
                                                     }
                                                 </button>
                                             </th>
+                                            <th></th>
                                             <th class="text-center">
                                                 <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="@(() => SortByOpponentDeck("Plays"))">
                                                     Games
@@ -418,7 +458,22 @@
                                         {
                                             <tr>
                                                 <td>
-                                                    <NavLink class="deck-link" href="@Utilities.GetDeckUrl(deck.DeckName)">@deck.DeckName</NavLink>
+                                                    <NavLink class="deck-link" href="@Utilities.GetDeckUrl(deck.LinkDeckName)">@deck.DeckName</NavLink>
+                                                </td>
+                                                <td>
+                                                    @if (deck.ColorSymbols.Count > 0)
+                                                    {
+                                                        <div class="d-flex align-items-center gap-1" style="min-width: fit-content;">
+                                                            @foreach (var symbol in deck.ColorSymbols)
+                                                            {
+                                                                <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                                            }
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
                                                 </td>
                                                 <td class="text-center">@deck.Plays</td>
                                                 <td class="text-center @(Utilities.GetWinRateColorForPlayer(deck.WinRate))">@Utilities.FormatWinRate(deck.WinRate)</td>
@@ -433,7 +488,7 @@
                         }
                         else
                         {
-                            <p class="text-muted mb-0">No opponent deck data available.</p>
+                            <p class="text-muted mb-0">No opponent color data available.</p>
                         }
                     </div>
                 </div>
@@ -457,11 +512,9 @@
     private int lossesAsNonFirstPlayer = 0;
     private int playsAsFirstPlayer = 0;
     private int playsAsNonFirstPlayer = 0;
-    private string? mostPlayedDeck;
+    private DeckStats? mostPlayedColorStats;
     private int uniqueDecksCount = 0;
-    private string? mostSuccessfulDeck;
-    private int mostPlayedDeckPlays = 0;
-    private double mostSuccessfulDeckWinRate = 0;
+    private DeckStats? mostSuccessfulColorStats;
     private List<DeckStats> deckStats = new();
     private string currentSort = "Plays";
     private bool sortAscending = false;
@@ -509,11 +562,9 @@
             lossesAsNonFirstPlayer = 0;
             playsAsFirstPlayer = 0;
             playsAsNonFirstPlayer = 0;
-            mostPlayedDeck = null;
+            mostPlayedColorStats = null;
             uniqueDecksCount = 0;
-            mostSuccessfulDeck = null;
-            mostPlayedDeckPlays = 0;
-            mostSuccessfulDeckWinRate = 0;
+            mostSuccessfulColorStats = null;
             deckStats.Clear();
             headToHeadStats.Clear();
             opponentDeckStats.Clear();
@@ -553,66 +604,38 @@
             playsAsFirstPlayer = playerPlays.Count(p => p.PlayerScores.Any(ps => ps.IsFirstPlayer && ps.PlayerRefId == playerId));
             playsAsNonFirstPlayer = playerPlays.Count(p => p.PlayerScores.Any(ps => !ps.IsFirstPlayer && ps.PlayerRefId == playerId));
 
-            // Calculate most played deck
-            var deckPlays = allScores
-                .Where(ps => !string.IsNullOrWhiteSpace(ps.Deck))
-                .GroupBy(ps => ps.Deck)
-                .Select(g => new { Deck = g.Key, Plays = g.Count() })
-                .OrderByDescending(d => d.Plays)
-                .ToList();
-            
-            if (deckPlays.Any())
-            {
-                mostPlayedDeck = deckPlays.First().Deck;
-                mostPlayedDeckPlays = deckPlays.First().Plays;
-            }
+            var playerColorEntries = DeckStatsService.BuildPlayerScoreColorEntries(
+                playerPlays,
+                score => score.PlayerRefId == playerId);
 
-            // Calculate unique decks count
-            uniqueDecksCount = allScores
-                .Where(ps => !string.IsNullOrWhiteSpace(ps.Deck))
-                .GroupBy(ps => ps.Deck)
-                .Count();
-
-            // Calculate deck statistics
-            deckStats = allScores
-                .Where(ps => !string.IsNullOrWhiteSpace(ps.Deck))
-                .GroupBy(ps => ps.Deck)
-                .Select(g => new DeckStats
+            deckStats = DeckStatsService
+                .AggregateByColorIdentity(playerColorEntries, entry => entry.Score.IsWinner)
+                .Select(row => new DeckStats
                 {
-                    DeckName = g.Key,
-                    Plays = g.Count(),
-                    Wins = g.Count(ps => ps.IsWinner),
-                    Losses = g.Count(ps => !ps.IsWinner),
-                    WinRate = g.Count(ps => ps.IsWinner) / (double)g.Count()
+                    DeckName = row.ColorIdentityName,
+                    LinkDeckName = row.LinkDeckName,
+                    ColorSymbols = row.ColorSymbols.ToList(),
+                    Plays = row.Plays,
+                    Wins = row.Wins,
+                    Losses = row.Losses,
+                    WinRate = row.WinRate,
+                    LastPlayed = row.LastPlayed
                 })
                 .ToList();
 
-            // Calculate most successful deck (highest win rate)
-            var mostSuccessfulDeckData = deckStats
-                .Where(d => d.Plays >= 2) // Require at least 2 plays to avoid skewed results
-                .OrderByDescending(d => d.WinRate)
-                .ThenByDescending(d => d.Plays) // Tiebreaker: more plays
-                .FirstOrDefault();
-            
-            if (mostSuccessfulDeckData != null)
-            {
-                mostSuccessfulDeck = mostSuccessfulDeckData.DeckName;
-                mostSuccessfulDeckWinRate = mostSuccessfulDeckData.WinRate;
-            }
+            uniqueDecksCount = deckStats.Count;
 
-            // Populate last played dates for each deck
-            foreach (var deck in deckStats)
-            {
-                var lastPlay = playerPlays
-                    .Where(p => p.PlayerScores.Any(ps => ps.Deck == deck.DeckName))
-                    .OrderByDescending(p => p.Date)
-                    .FirstOrDefault();
-                
-                if (lastPlay != null && DateTime.TryParse(lastPlay.Date, out var lastPlayDate))
-                {
-                    deck.LastPlayed = lastPlayDate;
-                }
-            }
+            mostPlayedColorStats = deckStats
+                .OrderByDescending(d => d.Plays)
+                .ThenBy(d => d.DeckName, StringComparer.Ordinal)
+                .FirstOrDefault();
+
+            mostSuccessfulColorStats = deckStats
+                .Where(d => d.Plays >= 2)
+                .OrderByDescending(d => d.WinRate)
+                .ThenByDescending(d => d.Plays)
+                .ThenBy(d => d.DeckName, StringComparer.Ordinal)
+                .FirstOrDefault();
 
             // Sort the deck stats based on the current sort criteria
             sortedDeckStats = GetSortedDeckStats(deckStats, currentSort, sortAscending);
@@ -720,39 +743,21 @@
     private void CalculateOpponentDeckStats()
     {
         opponentDeckStats.Clear();
-        
-        // Get all opponent deck scores from games where this player participated
-        var opponentDeckScores = playerPlays
-            .SelectMany(p => p.PlayerScores)
-            .Where(ps => ps.PlayerRefId != playerId && !string.IsNullOrWhiteSpace(ps.Deck))
-            .ToList();
 
-        // Group by opponent deck and calculate statistics
-        opponentDeckStats = opponentDeckScores
-            .GroupBy(ps => ps.Deck)
-            .Select(g => new DeckStats
+        opponentDeckStats = DeckStatsService
+            .CalculateOpponentColorIdentityStats(playerPlays, playerId)
+            .Select(row => new DeckStats
             {
-                DeckName = g.Key,
-                Plays = g.Count(),
-                Wins = g.Count(ps => ps.IsWinner), // This player's wins against this deck
-                Losses = g.Count(ps => !ps.IsWinner), // This player's losses against this deck
-                WinRate = g.Count(ps => !ps.IsWinner) / (double)g.Count() // This player's win rate against this deck
+                DeckName = row.ColorIdentityName,
+                LinkDeckName = row.LinkDeckName,
+                ColorSymbols = row.ColorSymbols.ToList(),
+                Plays = row.Plays,
+                Wins = row.Wins,
+                Losses = row.Losses,
+                WinRate = row.WinRate,
+                LastPlayed = row.LastPlayed
             })
             .ToList();
-
-        // Populate last played dates for each opponent deck
-        foreach (var deck in opponentDeckStats)
-        {
-            var lastPlay = playerPlays
-                .Where(p => p.PlayerScores.Any(ps => ps.Deck == deck.DeckName && ps.PlayerRefId != playerId))
-                .OrderByDescending(p => p.Date)
-                .FirstOrDefault();
-            
-            if (lastPlay != null && DateTime.TryParse(lastPlay.Date, out var lastPlayDate))
-            {
-                deck.LastPlayed = lastPlayDate;
-            }
-        }
     }
 
     private void CalculateHeadToHeadStats()
@@ -811,6 +816,8 @@
     private class DeckStats
     {
         public string DeckName { get; set; } = string.Empty;
+        public string LinkDeckName { get; set; } = string.Empty;
+        public List<DeckColorSymbol> ColorSymbols { get; set; } = new();
         public int Plays { get; set; }
         public int Wins { get; set; }
         public int Losses { get; set; }

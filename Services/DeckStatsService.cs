@@ -9,6 +9,10 @@ public interface IDeckStatsService
 {
     DeckPlayStats CalculateDeckStats(DeckFile deck, IEnumerable<Play> plays);
     bool IsRoleMatchForDeck(DeckFile deck, string role);
+    IReadOnlyList<PlayerScoreColorStatEntry> BuildPlayerScoreColorEntries(IEnumerable<Play> plays, Func<PlayerScore, bool> scorePredicate);
+    IReadOnlyList<ColorIdentityStatRow> AggregateByColorIdentity(IEnumerable<PlayerScoreColorStatEntry> entries, Func<PlayerScoreColorStatEntry, bool> isWinPredicate);
+    ColorInclusionStat? GetMostIncludedColor(IEnumerable<PlayerScoreColorStatEntry> entries);
+    IReadOnlyList<ColorIdentityStatRow> CalculateOpponentColorIdentityStats(IEnumerable<Play> plays, int playerId);
 }
 
 public sealed class DeckStatsService : IDeckStatsService
@@ -117,6 +121,117 @@ public sealed class DeckStatsService : IDeckStatsService
         return RoleMatchesDeck(role, baseColors, splashColors);
     }
 
+    public IReadOnlyList<PlayerScoreColorStatEntry> BuildPlayerScoreColorEntries(IEnumerable<Play> plays, Func<PlayerScore, bool> scorePredicate)
+    {
+        var entries = new List<PlayerScoreColorStatEntry>();
+
+        foreach (var play in plays)
+        {
+            var playedAt = TryParsePlayDateTime(play.Date, out var parsedPlayedAt) ? parsedPlayedAt : (DateTime?)null;
+
+            foreach (var score in play.PlayerScores.Where(scorePredicate))
+            {
+                entries.Add(new PlayerScoreColorStatEntry(
+                    score,
+                    ColorIdentityHelper.GetRoleColorIdentityKeys(score.Deck),
+                    playedAt));
+            }
+        }
+
+        return entries;
+    }
+
+    public IReadOnlyList<ColorIdentityStatRow> AggregateByColorIdentity(IEnumerable<PlayerScoreColorStatEntry> entries, Func<PlayerScoreColorStatEntry, bool> isWinPredicate)
+    {
+        return entries
+            .GroupBy(entry => BuildColorIdentityKey(entry.ColorIdentityKeys))
+            .Select(group =>
+            {
+                var keys = group.First().ColorIdentityKeys;
+                var plays = group.Count();
+                var wins = group.Count(isWinPredicate);
+                var losses = plays - wins;
+
+                return new ColorIdentityStatRow(
+                    ColorIdentityName: ColorIdentityHelper.GetColorIdentityName(keys),
+                    LinkDeckName: BuildDeckLinkName(keys),
+                    ColorIdentityKeys: keys,
+                    ColorSymbols: keys.Select(color => new DeckColorSymbol(color, false)).ToList(),
+                    Plays: plays,
+                    Wins: wins,
+                    Losses: losses,
+                    WinRate: plays > 0 ? wins / (double)plays : 0,
+                    LastPlayed: group.Max(entry => entry.PlayedAt));
+            })
+            .ToList();
+    }
+
+    public ColorInclusionStat? GetMostIncludedColor(IEnumerable<PlayerScoreColorStatEntry> entries)
+    {
+        var favoriteColor = entries
+            .SelectMany(entry => entry.ColorIdentityKeys)
+            .GroupBy(color => color)
+            .OrderByDescending(group => group.Count())
+            .ThenBy(group => ColorIdentityHelper.GetColorOrder(group.Key))
+            .FirstOrDefault();
+
+        if (favoriteColor is null)
+        {
+            return null;
+        }
+
+        return new ColorInclusionStat(
+            favoriteColor.Key,
+            favoriteColor.Count());
+    }
+
+    public IReadOnlyList<ColorIdentityStatRow> CalculateOpponentColorIdentityStats(IEnumerable<Play> plays, int playerId)
+    {
+        var groupedStats = new Dictionary<string, (IReadOnlyList<string> Keys, int Plays, int Wins, int Losses, DateTime? LastPlayed)>(StringComparer.Ordinal);
+
+        foreach (var play in plays)
+        {
+            var playerScore = play.PlayerScores.FirstOrDefault(score => score.PlayerRefId == playerId);
+            if (playerScore is null)
+            {
+                continue;
+            }
+
+            var playedAt = TryParsePlayDateTime(play.Date, out var parsedPlayedAt) ? parsedPlayedAt : (DateTime?)null;
+
+            foreach (var opponentScore in play.PlayerScores.Where(score => score.PlayerRefId != playerId))
+            {
+                var opponentColorKeys = ColorIdentityHelper.GetRoleColorIdentityKeys(opponentScore.Deck);
+                var opponentIdentityKey = BuildColorIdentityKey(opponentColorKeys);
+
+                if (!groupedStats.TryGetValue(opponentIdentityKey, out var group))
+                {
+                    group = (opponentColorKeys, 0, 0, 0, null);
+                }
+
+                var nextPlays = group.Plays + 1;
+                var nextWins = group.Wins + (playerScore.IsWinner ? 1 : 0);
+                var nextLosses = group.Losses + (playerScore.IsWinner ? 0 : 1);
+                var nextLastPlayed = GetLatestDate(group.LastPlayed, playedAt);
+
+                groupedStats[opponentIdentityKey] = (group.Keys, nextPlays, nextWins, nextLosses, nextLastPlayed);
+            }
+        }
+
+        return groupedStats
+            .Select(group => new ColorIdentityStatRow(
+                ColorIdentityName: ColorIdentityHelper.GetColorIdentityName(group.Value.Keys),
+                LinkDeckName: BuildDeckLinkName(group.Value.Keys),
+                ColorIdentityKeys: group.Value.Keys,
+                ColorSymbols: group.Value.Keys.Select(color => new DeckColorSymbol(color, false)).ToList(),
+                Plays: group.Value.Plays,
+                Wins: group.Value.Wins,
+                Losses: group.Value.Losses,
+                WinRate: group.Value.Plays > 0 ? group.Value.Wins / (double)group.Value.Plays : 0,
+                LastPlayed: group.Value.LastPlayed))
+            .ToList();
+    }
+
     private static HashSet<DateOnly> BuildDeckDates(DeckFile deck)
     {
         var dates = new HashSet<DateOnly> { deck.Date!.Value };
@@ -156,6 +271,38 @@ public sealed class DeckStatsService : IDeckStatsService
 
         playDate = default;
         return false;
+    }
+
+    private static bool TryParsePlayDateTime(string playDateRaw, out DateTime playedAt)
+    {
+        return DateTime.TryParse(playDateRaw, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out playedAt);
+    }
+
+    private static string BuildColorIdentityKey(IReadOnlyList<string> colorIdentityKeys)
+    {
+        return colorIdentityKeys.Count == 0 ? "Colorless" : string.Concat(colorIdentityKeys);
+    }
+
+    private static string BuildDeckLinkName(IReadOnlyList<string> colorIdentityKeys)
+    {
+        return colorIdentityKeys.Count == 0
+            ? "Colorless"
+            : string.Join('/', colorIdentityKeys.Select(ColorIdentityHelper.GetColorName));
+    }
+
+    private static DateTime? GetLatestDate(DateTime? left, DateTime? right)
+    {
+        if (!left.HasValue)
+        {
+            return right;
+        }
+
+        if (!right.HasValue)
+        {
+            return left;
+        }
+
+        return left.Value >= right.Value ? left : right;
     }
 
     private static bool RoleMatchesDeck(string role, HashSet<string> baseColors, HashSet<string> splashColors)
@@ -260,3 +407,23 @@ public sealed record DeckPlayStats(
             ? null
             : WinsAsNonFirstPlayer / (double)(WinsAsNonFirstPlayer + LossesAsNonFirstPlayer);
 }
+
+public sealed record PlayerScoreColorStatEntry(
+    PlayerScore Score,
+    IReadOnlyList<string> ColorIdentityKeys,
+    DateTime? PlayedAt);
+
+public sealed record ColorIdentityStatRow(
+    string ColorIdentityName,
+    string LinkDeckName,
+    IReadOnlyList<string> ColorIdentityKeys,
+    IReadOnlyList<DeckColorSymbol> ColorSymbols,
+    int Plays,
+    int Wins,
+    int Losses,
+    double WinRate,
+    DateTime? LastPlayed);
+
+public sealed record ColorInclusionStat(
+    string ColorKey,
+    int Plays);

@@ -4,8 +4,6 @@ public static partial class FoundationsCardCatalog
 {
     private static readonly string[] ColorTokens = ["W", "U", "B", "R", "G"];
 
-    public static IEnumerable<string> CardNames => MetadataByName.Keys;
-
     public static bool Contains(string cardName)
     {
         return !string.IsNullOrWhiteSpace(cardName) && MetadataByName.ContainsKey(cardName);
@@ -29,11 +27,6 @@ public static partial class FoundationsCardCatalog
         var orderedColors = GetOrderedDeckColors(cards, colorCounts, colorCardCounts, sortByWeight: true);
 
         return ColorIdentityHelper.GetColorIdentityName(orderedColors, colorCardCounts);
-    }
-
-    public static IReadOnlyList<string> GetDeckColorIdentityKeys(IEnumerable<CardEntry> cards)
-    {
-        return GetOrderedDeckColors(cards, null, null, sortByWeight: false);
     }
 
     public static int GetManaValueFromManaCost(string? manaCost)
@@ -178,14 +171,6 @@ public static partial class FoundationsCardCatalog
             .OrderBy(entry => ColorIdentityHelper.GetColorOrder(entry.Key))
             .Select(entry => entry.Key)
             .ToList();
-    }
-
-    private static bool HasType(IEnumerable<string> types, string typeName)
-    {
-        return types.Any(type =>
-            type.Equals(typeName, StringComparison.OrdinalIgnoreCase)
-            || type.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                .Any(token => token.Equals(typeName, StringComparison.OrdinalIgnoreCase)));
     }
 
     private static IEnumerable<string> GetManaSymbols(string manaCost)
@@ -583,16 +568,5 @@ public static partial class FoundationsCardCatalog
         ["Zombify"] = new FoundationsCardMetadata("{3}{B}", [ "Sorcery" ], CardRarity.Uncommon),
         ["Zul Ashur, Lich Lord"] = new FoundationsCardMetadata("{1}{B}", [ "Legendary Creature" ], CardRarity.Rare),
     };
-
-    public static bool TryGet(string cardName, out FoundationsCardMetadata metadata)
-    {
-        if (string.IsNullOrWhiteSpace(cardName))
-        {
-            metadata = default!;
-            return false;
-        }
-
-        return MetadataByName.TryGetValue(cardName, out metadata!);
-    }
 }
 

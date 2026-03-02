@@ -5,6 +5,7 @@
 @inject IBGStatsImportService BGStatsService
 @inject IGlobalFilterService GlobalFilterService
 @inject IDeckStatsService DeckStatsService
+@inject IDeckTableDataService DeckTableDataService
 
 <PageTitle>Magic Draft Stats</PageTitle>
 
@@ -257,9 +258,10 @@
                                 <tr>
                                     <th>Rank</th>
                                     <th>Player</th>
-                                    <th>Plays</th>
-                                    <th>Wins</th>
-                                    <th>Win Rate</th>
+                                    <th class="text-center">Plays</th>
+                                    <th class="text-center">Trophy Decks</th>
+                                    <th class="text-center">Wins</th>
+                                    <th class="text-center">Win Rate</th>
                                     <th>Most Played Colors</th>
                                     <th>Most Played Color</th>
                                 </tr>
@@ -278,6 +280,7 @@
                                                 PlayerName = g.Key.PlayerName,
                                                 PlayerRefId = g.Key.PlayerRefId,
                                                 GamesPlayed = g.Count(),
+                                                TrophyDecks = trophyDeckCountsByPlayer.TryGetValue(g.Key.PlayerRefId, out var trophyDeckCount) ? trophyDeckCount : 0,
                                                 Wins = g.Count(ps => ps.IsWinner),
                                                 WinRate = g.Count(ps => ps.IsWinner) / (double)g.Count(),
                                                 FavouriteColorCombinationName = mostPlayedColorStats.ColorCombinationName,
@@ -318,9 +321,10 @@
                                                     <strong>@player.PlayerName</strong>
                                                 </NavLink>
                                             </td>
-                                            <td>@player.GamesPlayed</td>
-                                            <td>@player.Wins</td>
-                                            <td>
+                                            <td class="text-center">@player.GamesPlayed</td>
+                                            <td class="text-center">@player.TrophyDecks</td>
+                                            <td class="text-center">@player.Wins</td>
+                                            <td class="text-center">
                                                 <span class="fw-bold @Utilities.GetWinRateColorForPlayer(player.WinRate)">@Utilities.FormatWinRate(player.WinRate)</span>
                                             </td>
                                             <td>
@@ -372,6 +376,7 @@
     private int currentPage = 1;
     private int totalPages = 1;
     private List<Play> currentPagePlays = new();
+    private Dictionary<int, int> trophyDeckCountsByPlayer = new();
 
     public class FirstPlayerStats
     {
@@ -405,6 +410,7 @@
             isLoading = true;
             
             plays = await BGStatsService.GetMagicPlaysAsync(GlobalFilterService.SelectedVariants);
+            trophyDeckCountsByPlayer = await DeckTableDataService.GetTrophyDeckCountsByPlayerAsync(plays);
             
             // Sort plays by date (newest first)
             plays = plays.OrderByDescending(p => DateTime.Parse(p.Date)).ToList();

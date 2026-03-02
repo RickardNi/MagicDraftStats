@@ -5,6 +5,8 @@ namespace MagicDraftStats.Services;
 public interface IDeckTableDataService
 {
     Task<DeckTableDataResult> LoadAsync(IEnumerable<Play>? plays = null);
+    Task<Dictionary<int, int>> GetTrophyDeckCountsByPlayerAsync(IEnumerable<Play>? plays = null);
+    Dictionary<int, int> BuildTrophyDeckCountsByPlayer(IEnumerable<DeckTableRow> deckRows);
 }
 
 public sealed class DeckTableDataService : IDeckTableDataService
@@ -74,5 +76,19 @@ public sealed class DeckTableDataService : IDeckTableDataService
             .ToList();
 
         return new DeckTableDataResult(deckRows, validationIssues);
+    }
+
+    public async Task<Dictionary<int, int>> GetTrophyDeckCountsByPlayerAsync(IEnumerable<Play>? plays = null)
+    {
+        var tableData = await LoadAsync(plays);
+        return BuildTrophyDeckCountsByPlayer(tableData.DeckRows);
+    }
+
+    public Dictionary<int, int> BuildTrophyDeckCountsByPlayer(IEnumerable<DeckTableRow> deckRows)
+    {
+        return deckRows
+            .Where(deck => deck.Rank == 1)
+            .GroupBy(deck => deck.PlayerId)
+            .ToDictionary(group => group.Key, group => group.Count());
     }
 }

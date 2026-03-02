@@ -1,0 +1,22 @@
+.players-name-header {
+    width: 8rem;
+    min-width: 8rem;
+}
+
+.players-name-cell {
+    width: 8rem;
+    max-width: 8rem;
+}
+
+.players-name-ellipsis {
+    display: block;
+    width: 8rem;
+    max-width: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.players-name-link {
+    display: inline;
+}

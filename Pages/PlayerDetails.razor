@@ -45,6 +45,8 @@
                         <dl class="row mb-0">
                             <dt class="col-sm-5">Total Plays</dt>
                             <dd class="col-sm-7">@playerStats.TotalPlays (<span class="text-success">@playerStats.Wins W</span>&nbsp;/&nbsp;<span class="text-danger">@playerStats.Losses L</span>)</dd>
+                            <dt class="col-sm-5">Trophy Decks</dt>
+                            <dd class="col-sm-7">@trophyDeckCount</dd>
                             <dt class="col-sm-5">Colors played</dt>
                             <dd class="col-sm-7">@uniqueDecksCount</dd>
                             <dt class="col-sm-5">Win Rate</dt>
@@ -754,6 +756,7 @@
     private bool opponentDeckSortAscending = false;
     private List<DeckStats> sortedOpponentDeckStats = new();
     private List<DeckTableRow> associatedDeckRows = new();
+    private int trophyDeckCount = 0;
 
     protected override void OnInitialized()
     {
@@ -799,10 +802,13 @@
             headToHeadStats.Clear();
             opponentDeckStats.Clear();
             associatedDeckRows.Clear();
+            trophyDeckCount = 0;
 
             var plays = await BGStatsService.GetMagicPlaysAsync(GlobalFilterService.SelectedVariants);
             var deckTableData = await DeckTableDataService.LoadAsync(plays);
             associatedDeckRows = deckTableData.DeckRows.Where(deck => deck.PlayerId == playerId).ToList();
+            var trophyDeckCountsByPlayer = DeckTableDataService.BuildTrophyDeckCountsByPlayer(deckTableData.DeckRows);
+            trophyDeckCount = trophyDeckCountsByPlayer.TryGetValue(playerId, out var playerTrophyDeckCount) ? playerTrophyDeckCount : 0;
 
             playerPlays = plays.Where(p => p.PlayerScores.Any(ps => ps.PlayerRefId == playerId)).ToList();
             

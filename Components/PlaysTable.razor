@@ -42,7 +42,7 @@ else
                         <td>
                             @if (winner != null)
                             {
-                                <NavLink class="player-link text-success fw-bold" href="@Utilities.GetPlayerUrl(winner.PlayerRefId)">@winner.PlayerName</NavLink>
+                                <NavLink class="@($"player-link text-success {GetPlayerWeightClass(play, winner)}")" href="@Utilities.GetPlayerUrl(winner.PlayerRefId)">@winner.PlayerName</NavLink>
                             }
                             else
                             {
@@ -82,7 +82,7 @@ else
                         <td>
                             @if (loser != null)
                             {
-                                <NavLink class="player-link text-danger fw-bold" href="@Utilities.GetPlayerUrl(loser.PlayerRefId)">@loser.PlayerName</NavLink>
+                                <NavLink class="@($"player-link text-danger {GetPlayerWeightClass(play, loser)}")" href="@Utilities.GetPlayerUrl(loser.PlayerRefId)">@loser.PlayerName</NavLink>
                             }
                             else
                             {
@@ -141,6 +141,24 @@ else
 
     [Parameter]
     public List<Play> Plays { get; set; } = new();
+
+    [Parameter]
+    public ISet<string>? HighlightScoreKeys { get; set; }
+
+    private string GetPlayerWeightClass(Play play, PlayerScore score)
+    {
+        if (HighlightScoreKeys is { Count: > 0 })
+        {
+            return HighlightScoreKeys.Contains(BuildPlayScoreKey(play, score)) ? "fw-bold" : string.Empty;
+        }
+
+        return "fw-bold";
+    }
+
+    private static string BuildPlayScoreKey(Play play, PlayerScore score)
+    {
+        return $"{play.Date}|{score.PlayerRefId}|{score.Deck.Trim()}";
+    }
 
     private static List<DeckColorSymbol> GetRoleColorSymbols(string? role)
     {

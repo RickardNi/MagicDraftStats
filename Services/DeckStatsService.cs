@@ -8,6 +8,7 @@ namespace MagicDraftStats.Services;
 public interface IDeckStatsService
 {
     DeckPlayStats CalculateDeckStats(DeckFile deck, IEnumerable<Play> plays);
+    bool IsRoleMatchForDeck(DeckFile deck, string role);
 }
 
 public sealed class DeckStatsService : IDeckStatsService
@@ -105,6 +106,15 @@ public sealed class DeckStatsService : IDeckStatsService
 
         _statsCache[cacheKey] = stats;
         return stats;
+    }
+
+    public bool IsRoleMatchForDeck(DeckFile deck, string role)
+    {
+        var symbols = FoundationsCardCatalog.GetDeckColorIdentitySymbols(deck.Cards);
+        var baseColors = symbols.Where(symbol => !symbol.IsSplash).Select(symbol => symbol.ColorKey).ToHashSet(StringComparer.Ordinal);
+        var splashColors = symbols.Where(symbol => symbol.IsSplash).Select(symbol => symbol.ColorKey).ToHashSet(StringComparer.Ordinal);
+
+        return RoleMatchesDeck(role, baseColors, splashColors);
     }
 
     private static HashSet<DateOnly> BuildDeckDates(DeckFile deck)

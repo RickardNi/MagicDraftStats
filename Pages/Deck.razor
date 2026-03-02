@@ -1,4 +1,5 @@
 @page "/deck/{deckId}"
+@using MagicDraftStats.Components
 @using MagicDraftStats.Models
 @using MagicDraftStats.Services
 @inject IDeckImportService DeckImportService
@@ -73,18 +74,15 @@
                     <div class="card-body">
                         <dl class="row mb-0">
                             <dt class="col-sm-5">Plays</dt>
-                            <dd class="col-sm-7">@deckPlayCount</dd>
-                            <dt class="col-sm-5">Wins</dt>
-                            <dd class="col-sm-7 text-success fw-bold">@deckWinCount</dd>
-                            <dt class="col-sm-5">Losses</dt>
-                            <dd class="col-sm-7 text-danger">@deckLossCount</dd>
-                        </dl>
-                        <hr class="my-3" />
-                        <dl class="row mb-0">
+                            <dd class="col-sm-7">@deckPlayCount (<span class="text-success">@deckWinCount W</span>&nbsp;/&nbsp;<span class="text-danger">@deckLossCount L</span>)</dd>
+                            <dt class="col-sm-5">Win Rate</dt>
+                            <dd class="col-sm-7 @GetWinRateClass(overallWinRate)">@FormatNullableWinRate(overallWinRate)</dd>
                             <dt class="col-sm-5">First Player Win Rate</dt>
                             <dd class="col-sm-7 @GetWinRateClass(firstPlayerWinRate)">@FormatNullableWinRate(firstPlayerWinRate)</dd>
-                            <dt class="col-sm-5">Going Second Win Rate</dt>
+                            <dt class="col-sm-5">Win Rate When Going Second</dt>
                             <dd class="col-sm-7 @GetWinRateClass(goingSecondWinRate)">@FormatNullableWinRate(goingSecondWinRate)</dd>
+                            <dt class="col-sm-5">Average Duration</dt>
+                            <dd class="col-sm-7">@FormatAverageDuration(averageDurationMinutes)</dd>
                         </dl>
                         <hr class="my-3" />
                         <dl class="row mb-0">
@@ -188,6 +186,22 @@
             </div>
         </div>
 
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-list-ul"></i>Plays with This Deck</h5>
+            </div>
+            <div class="card-body">
+                @if (deckPlays.Any())
+                {
+                    <PlaysTable Plays="@deckPlays" HighlightScoreKeys="@highlightedDeckScoreKeys" />
+                }
+                else
+                {
+                    <p class="text-muted mb-0">No plays found</p>
+                }
+            </div>
+        </div>
+
     }
 
 </div>
@@ -204,6 +218,7 @@
     private List<DeckColorSymbol> deckColorSymbols = new();
     private string playerName = "-";
     private int playerId = 0;
+    private HashSet<string> highlightedDeckScoreKeys = new(StringComparer.Ordinal);
 
     private List<Play> deckPlays = new();
     private ApexChartOptions<FirstPlayerStats> firstPlayerChartOptions = new();
@@ -211,6 +226,8 @@
     private int deckPlayCount = 0;
     private int deckWinCount = 0;
     private int deckLossCount = 0;
+    private double? overallWinRate;
+    private double? averageDurationMinutes;
     private double? firstPlayerWinRate;
     private double? goingSecondWinRate;
     private int lossesAsFirstPlayer = 0;
@@ -237,6 +254,7 @@
             deckColorSymbols = new();
             playerName = "-";
             playerId = 0;
+            highlightedDeckScoreKeys.Clear();
             deckPlays.Clear();
             deckPlayCount = 0;
             deckWinCount = 0;
@@ -245,6 +263,8 @@
             lossesAsFirstPlayer = 0;
             winsAsNonFirstPlayer = 0;
             lossesAsNonFirstPlayer = 0;
+            overallWinRate = null;
+            averageDurationMinutes = null;
             firstPlayerWinRate = null;
             goingSecondWinRate = null;
 
@@ -275,9 +295,12 @@
             var deckStats = DeckStatsService.CalculateDeckStats(deckFile, bgStatsData?.Plays ?? []);
 
             deckPlays = deckStats.MatchedPlays.ToList();
+            highlightedDeckScoreKeys = BuildHighlightedDeckScoreKeys(deckFile, deckPlays);
             deckPlayCount = deckStats.Plays;
             deckWinCount = deckStats.Wins;
             deckLossCount = deckStats.Losses;
+            overallWinRate = deckPlayCount > 0 ? deckWinCount / (double)deckPlayCount : null;
+            averageDurationMinutes = deckPlays.Count > 0 ? deckPlays.Average(play => play.DurationInMinutes) : null;
             winsAsFirstPlayer = deckStats.WinsAsFirstPlayer;
             lossesAsFirstPlayer = deckStats.LossesAsFirstPlayer;
             winsAsNonFirstPlayer = deckStats.WinsAsNonFirstPlayer;
@@ -390,7 +413,36 @@
 
     private static string GetWinRateClass(double? winRate)
     {
-        return winRate.HasValue ? $"fw-bold {Utilities.GetWinRateColorForDeck(winRate.Value)}" : "text-muted";
+        return winRate.HasValue ? Utilities.GetWinRateColorForDeck(winRate.Value) : "text-muted";
+    }
+
+    private static string FormatAverageDuration(double? averageDuration)
+    {
+        return averageDuration.HasValue ? $"{averageDuration.Value:F1} minutes" : "-";
+    }
+
+    private HashSet<string> BuildHighlightedDeckScoreKeys(DeckFile deck, IEnumerable<Play> plays)
+    {
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var play in plays)
+        {
+            var deckScore = play.PlayerScores.FirstOrDefault(score =>
+                score.PlayerRefId == deck.PlayerRefId
+                && DeckStatsService.IsRoleMatchForDeck(deck, score.Deck));
+
+            if (deckScore != null)
+            {
+                keys.Add(BuildPlayScoreKey(play, deckScore));
+            }
+        }
+
+        return keys;
+    }
+
+    private static string BuildPlayScoreKey(Play play, PlayerScore score)
+    {
+        return $"{play.Date}|{score.PlayerRefId}|{score.Deck.Trim()}";
     }
 
     public class FirstPlayerStats

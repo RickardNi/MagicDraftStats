@@ -179,6 +179,12 @@
                                     </button>
                                 </th>
                                 <th class="text-center">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Rwc)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.Rwc)">
+                                        RWC
+                                        @SortIcon(SortColumn.Rwc)
+                                    </button>
+                                </th>
+                                <th class="text-center">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Decks)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.Decks)">
                                         Decks
                                         @SortIcon(SortColumn.Decks)
@@ -252,7 +258,8 @@
                                     </td>
                                     <td class="text-center">@FoundationsCardCatalog.GetRarityShortLabel(card.Rarity)</td>
                                     <td class="text-center cards-col-divider-left">@card.PlayCount</td>
-                                    <td class="text-center cards-col-divider-right">@FormatPercent(card.WinPercent)</td>
+                                    <td class="text-center">@FormatPercent(card.WinPercent)</td>
+                                    <td class="text-center cards-col-divider-right">@FormatPercent(card.Rwc)</td>
                                     <td class="text-center">@card.DeckCount</td>
                                     <td class="text-center">@FormatPercent(card.PlayedPercent)</td>
                                     <td class="text-center"><span class="fw-bold text-success-dark">@card.WinnerDeckCount</span></td>
@@ -305,6 +312,7 @@
         Rarity,
         Plays,
         WinPercent,
+        Rwc,
         Decks,
         PlayedPercent,
         WinnerDecks,
@@ -342,17 +350,40 @@
             totalWinnerDeckCount = decks.Count(deck => deck.Rank == 1);
 
             var aggregates = new Dictionary<string, CardAggregate>(StringComparer.OrdinalIgnoreCase);
+            var deckSnapshots = new List<DeckSnapshot>(decks.Count);
+            var colorComboAggregates = new Dictionary<string, ColorComboAggregate>(StringComparer.Ordinal);
 
             foreach (var deck in decks)
             {
-                var cardsInDeck = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 var deckStats = DeckStatsService.CalculateDeckStats(deck, plays);
                 var deckPlayCount = deckStats.Plays;
                 var deckWinCount = deckStats.Wins;
+                var deckColorIdentityKey = BuildDeckColorIdentityKey(deck);
 
-                foreach (var card in deck.Cards.Where(card => card.Count > 0 && !string.IsNullOrWhiteSpace(card.Name)))
+                if (!colorComboAggregates.TryGetValue(deckColorIdentityKey, out var comboAggregate))
+                {
+                    comboAggregate = new ColorComboAggregate();
+                    colorComboAggregates[deckColorIdentityKey] = comboAggregate;
+                }
+
+                comboAggregate.PlayCount += deckPlayCount;
+                comboAggregate.WinCount += deckWinCount;
+
+                deckSnapshots.Add(new DeckSnapshot(deck, deckPlayCount, deckWinCount, deckColorIdentityKey));
+            }
+
+            foreach (var snapshot in deckSnapshots)
+            {
+                var cardsInDeck = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var card in snapshot.Deck.Cards.Where(card => card.Count > 0 && !string.IsNullOrWhiteSpace(card.Name)))
                 {
                     var cardName = card.Name.Trim();
+                    if (!cardsInDeck.Add(cardName))
+                    {
+                        continue;
+                    }
+
                     if (!aggregates.TryGetValue(cardName, out var aggregate))
                     {
                         aggregate = new CardAggregate(cardName);
@@ -360,21 +391,23 @@
                     }
 
                     aggregate.TotalCopies += card.Count;
+                    aggregate.DeckCount++;
+                    aggregate.PlayCount += snapshot.PlayCount;
+                    aggregate.WinCount += snapshot.WinCount;
 
-                    if (cardsInDeck.Add(cardName))
+                    if (colorComboAggregates.TryGetValue(snapshot.ColorIdentityKey, out var comboAggregate)
+                        && comboAggregate.PlayCount > 0)
                     {
-                        aggregate.DeckCount++;
-                        aggregate.PlayCount += deckPlayCount;
-                        aggregate.WinCount += deckWinCount;
-
-                        if (deck.Rank == 1)
-                        {
-                            aggregate.WinnerDeckCount++;
-                        }
-
-                        aggregate.RankSum += deck.Rank;
-                        aggregate.RankCount++;
+                        aggregate.ColorComboBaselineWeightedSum += snapshot.PlayCount * comboAggregate.WinRate;
                     }
+
+                    if (snapshot.Deck.Rank == 1)
+                    {
+                        aggregate.WinnerDeckCount++;
+                    }
+
+                    aggregate.RankSum += snapshot.Deck.Rank;
+                    aggregate.RankCount++;
                 }
             }
 
@@ -442,6 +475,9 @@
             ImageUrl = visual?.ImageUrl ?? $"https://api.scryfall.com/cards/named?exact={Uri.EscapeDataString(aggregate.CardName)}&set=fdn&format=image",
             PlayCount = aggregate.PlayCount,
             WinPercent = aggregate.PlayCount > 0 ? (double)aggregate.WinCount / aggregate.PlayCount : null,
+            Rwc = aggregate.PlayCount > 0
+                ? ((double)aggregate.WinCount / aggregate.PlayCount) - (aggregate.ColorComboBaselineWeightedSum / aggregate.PlayCount)
+                : null,
             DeckCount = aggregate.DeckCount,
             PlayedPercent = totalDeckCount > 0 ? (double)aggregate.DeckCount / totalDeckCount : null,
             WinnerDeckCount = aggregate.WinnerDeckCount,
@@ -563,6 +599,9 @@
             SortColumn.WinPercent => isAscending
                 ? source.OrderBy(row => row.WinPercent ?? -1)
                 : source.OrderByDescending(row => row.WinPercent ?? -1),
+            SortColumn.Rwc => isAscending
+                ? source.OrderBy(row => row.Rwc ?? -1)
+                : source.OrderByDescending(row => row.Rwc ?? -1),
             SortColumn.Decks => isAscending
                 ? source.OrderBy(row => row.DeckCount)
                 : source.OrderByDescending(row => row.DeckCount),
@@ -761,6 +800,7 @@
     {
         SortColumn.Plays => "Total matched plays across all decks that include this card.\n\nUsefulness: Medium (play sample size with this card in real games).",
         SortColumn.WinPercent => "Deck-level win rate for this card (DWR): total wins from decks that played the card divided by total matches played by decks that played the card.\n\nWhy it helps: uses exact deck membership, does not depend on draw/cast events, and stays stable with smaller samples.",
+        SortColumn.Rwc => "Relative Win Contribution (RWC): card DWR (Win %) minus the baseline DWR of decks in the same color combinations, weighted by the card's play distribution across those combinations.\n\nInterpretation: positive means the card overperforms its archetype baseline; negative means it underperforms.",
         SortColumn.Decks => "How many decks include this card at least once.\n\nUsefulness: Low-Medium for card quality (mainly sample size/popularity).",
         SortColumn.PlayedPercent => "Decks with card / all decks.\n\nUsefulness: Low-Medium (mostly popularity/availability).",
         SortColumn.WinnerDecks => "How many rank-1 decks include this card.\n\nUsefulness: Low by itself (biased by popularity).",
@@ -799,17 +839,39 @@
         return value.Value.ToString("F2");
     }
 
+    private static string BuildDeckColorIdentityKey(DeckFile deck)
+    {
+        var colorKeys = FoundationsCardCatalog
+            .GetDeckColorIdentitySymbols(deck.Cards)
+            .Select(symbol => symbol.ColorKey)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(ColorIdentityHelper.GetColorOrder)
+            .ToList();
+
+        return ColorIdentityHelper.BuildColorIdentityKey(colorKeys);
+    }
+
     private sealed class CardAggregate(string cardName)
     {
         public string CardName { get; } = cardName;
         public int PlayCount { get; set; }
         public int WinCount { get; set; }
+        public double ColorComboBaselineWeightedSum { get; set; }
         public int DeckCount { get; set; }
         public int WinnerDeckCount { get; set; }
         public int TotalCopies { get; set; }
         public int RankSum { get; set; }
         public int RankCount { get; set; }
     }
+
+    private sealed class ColorComboAggregate
+    {
+        public int PlayCount { get; set; }
+        public int WinCount { get; set; }
+        public double WinRate => PlayCount > 0 ? (double)WinCount / PlayCount : 0;
+    }
+
+    private sealed record DeckSnapshot(DeckFile Deck, int PlayCount, int WinCount, string ColorIdentityKey);
 
     private sealed class CardRow
     {
@@ -823,6 +885,7 @@
         public string ImageUrl { get; set; } = string.Empty;
         public int PlayCount { get; set; }
         public double? WinPercent { get; set; }
+        public double? Rwc { get; set; }
         public int DeckCount { get; set; }
         public int WinnerDeckCount { get; set; }
         public double? PlayedPercent { get; set; }

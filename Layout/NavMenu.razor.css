@@ -62,7 +62,7 @@
     margin-left: auto;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1000px) {
     .nav-bar-links {
         gap: 1.25rem;
         justify-content: center;

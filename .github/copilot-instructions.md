@@ -2,6 +2,9 @@
 
 ## General Guidelines
 - Prefer using the latest versions of all packages and avoid downgrades whenever possible.
+- Prefer clean, readable, maintainable code.
+- Avoid duplicated code when possible; prefer reusing existing logic and components.
+- Avoid hard-coded styling in Razor pages; prefer using component/page CSS files instead when possible and convenient.
 
 ## Code Comments
 

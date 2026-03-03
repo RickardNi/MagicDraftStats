@@ -22,6 +22,8 @@
 .cards-data-table thead .btn {
     font-size: 0.8rem;
     font-weight: 600;
+    user-select: text;
+    -webkit-user-select: text;
 }
 
 .cards-data-table .text-muted {
@@ -30,6 +32,13 @@
 
 .cards-color-symbols {
     line-height: 1;
+}
+
+.cards-color-text-copy {
+    font-size: 0.72rem;
+    color: var(--bs-secondary-color);
+    margin-left: 0.2rem;
+    white-space: nowrap;
 }
 
 .cards-color-chip {

@@ -893,5 +893,8 @@
         public double? WinnerSharePercent { get; set; }
         public double? AverageRank { get; set; }
         public string ColorKey => string.Join(string.Empty, ColorSymbols.Select(symbol => symbol.ColorKey));
+        public string ColorText => ColorSymbols.Count == 0
+            ? "C"
+            : string.Join('/', ColorSymbols.Select(symbol => symbol.ColorKey));
     }
 }

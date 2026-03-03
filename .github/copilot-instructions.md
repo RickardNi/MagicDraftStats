@@ -6,6 +6,11 @@
 - Avoid duplicated code when possible; prefer reusing existing logic and components.
 - Avoid hard-coded styling in Razor pages; prefer using component/page CSS files instead when possible and convenient.
 
+## Responsive Design
+- Build the site desktop-first since desktop usage is the primary target.
+- Treat mobile as the exception and use media queries for mobile-specific adjustments.
+- Use `768px` as the universal breakpoint for mobile devices.
+
 ## Code Comments
 
 - Do not add comments to generated code unless the code does something unintuitive or requires explanation.

@@ -196,13 +196,13 @@
                                         @SortIcon(SortColumn.PlayedPercent)
                                     </button>
                                 </th>
-                                <th class="text-center">
+                                <th class="text-center cards-less-significant">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.WinnerDecks)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.WinnerDecks)">
                                         Winner Decks
                                         @SortIcon(SortColumn.WinnerDecks)
                                     </button>
                                 </th>
-                                <th class="text-center">
+                                <th class="text-center cards-less-significant">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.WinnerDeckPercent)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.WinnerDeckPercent)">
                                         Winner Deck %
                                         @SortIcon(SortColumn.WinnerDeckPercent)
@@ -214,7 +214,7 @@
                                         @SortIcon(SortColumn.WinnerSharePercent)
                                     </button>
                                 </th>
-                                <th class="text-center">
+                                <th class="text-center cards-less-significant">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.AverageRank)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.AverageRank)">
                                         Avg Rank
                                         @SortIcon(SortColumn.AverageRank)
@@ -262,10 +262,10 @@
                                     <td class="text-center cards-col-divider-right">@FormatPercent(card.Rwc)</td>
                                     <td class="text-center">@card.DeckCount</td>
                                     <td class="text-center">@FormatPercent(card.PlayedPercent)</td>
-                                    <td class="text-center"><span class="fw-bold text-success-dark">@card.WinnerDeckCount</span></td>
-                                    <td class="text-center">@FormatPercent(card.WinnerDeckPercent)</td>
+                                    <td class="text-center cards-less-significant">@card.WinnerDeckCount</td>
+                                    <td class="text-center cards-less-significant">@FormatPercent(card.WinnerDeckPercent)</td>
                                     <td class="text-center">@FormatPercent(card.WinnerSharePercent)</td>
-                                    <td class="text-center">@FormatAverageRank(card.AverageRank)</td>
+                                    <td class="text-center cards-less-significant">@FormatAverageRank(card.AverageRank)</td>
                                 </tr>
                             }
                         </tbody>
@@ -289,7 +289,7 @@
     private HashSet<string> selectedTypeFilters = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<CardRarity> selectedRarityFilters = new();
     private string cardSearchText = string.Empty;
-    private SortColumn currentSortColumn = SortColumn.WinnerDeckPercent;
+    private SortColumn currentSortColumn = SortColumn.Plays;
     private bool isAscending = false;
 
     private static readonly string[] TypeFilterDisplayOrder =

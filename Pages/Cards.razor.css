@@ -50,3 +50,12 @@
 .cards-table-toolbar {
     font-size: 0.875rem;
 }
+
+.cards-less-significant {
+    color: var(--bs-secondary-color);
+    opacity: 0.82;
+}
+
+.cards-less-significant .btn {
+    color: inherit;
+}

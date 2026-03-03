@@ -2,12 +2,24 @@
     align-self: center;
 }
 
-.deck-title-mana-symbols .mana-symbol {
-    width: 25px;
-    height: 25px;
+.deck-title-mana-symbols ::deep .mana-symbol {
+    width: 32px;
+    height: 32px;
 }
 
-.deck-title-mana-symbols .mana-symbol-splash {
-    width: 18px;
-    height: 18px;
+.deck-title-mana-symbols ::deep .mana-symbol-splash {
+    width: 20px;
+    height: 20px;
+}
+
+@media (max-width: 768px) {
+    .deck-title-mana-symbols ::deep .mana-symbol {
+        width: 24px;
+        height: 24px;
+    }
+
+    .deck-title-mana-symbols ::deep .mana-symbol-splash {
+        width: 16px;
+        height: 16px;
+    }
 }

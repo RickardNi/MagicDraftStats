@@ -57,15 +57,15 @@
     color: orange !important;
 }
 
+/* Desktop: push settings dropdown to the right */
+.nav-bar-links .dropdown {
+    margin-left: auto;
+}
+
 @media (max-width: 768px) {
     .nav-bar-links {
-        gap: 1.5rem;
-        justify-content: center !important;
-        position: relative;
-    }
-    
-    .nav-bar-links .nav-link {
-        padding: 0.25rem 0.5rem;
+        gap: 1.25rem;
+        justify-content: center;
     }
     
     .nav-bar-links .nav-link .bi {
@@ -73,11 +73,22 @@
         margin-right: 0 !important;
     }
 
-    /* Settings dropdown positioning - keep to the right */
+    /* Settings dropdown - merge inline with other icons on mobile */
     .nav-bar-links .dropdown {
-        position: absolute;
-        right: 0;
-        margin-left: auto;
+        margin-left: -10px;
+    }
+
+    .nav-bar-links .dropdown .settings-dropdown-toggle {
+        padding: 0.5rem;
+    }
+
+    .nav-bar-links .dropdown .settings-dropdown-toggle .bi {
+        font-size: 1.5rem;
+    }
+
+    /* Hide dropdown caret on mobile */
+    .nav-bar-links .dropdown .settings-dropdown-toggle::after {
+        display: none;
     }
     
     /* Hide text on mobile, show only icons */

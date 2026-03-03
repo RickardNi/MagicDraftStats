@@ -228,6 +228,11 @@ a, .btn-link {
     margin-bottom: 0;
 }
 
+.card-body > p {
+    margin-bottom: 0.6rem;
+    line-height: 1.35;
+}
+
 .table {
     margin-bottom: 0 !important;
 }
@@ -508,6 +513,21 @@ dl.row > dd > .d-flex {
         margin: -1rem;
         padding: 0rem !important;
         padding-bottom: 12px !important;
+    }
+
+    dl.row > dt,
+    dl.row > dd {
+        min-height: 1.7rem;
+    }
+
+    dl.row > dt.col-sm-5 {
+        flex: 0 0 52%;
+        max-width: 52%;
+    }
+
+    dl.row > dd.col-sm-7 {
+        flex: 0 0 48%;
+        max-width: 48%;
     }
 
     .apexcharts-yaxis-label,

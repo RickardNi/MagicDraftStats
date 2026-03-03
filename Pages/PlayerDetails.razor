@@ -113,7 +113,7 @@
                                 @if (mostPlayedColorInclusionStats is not null)
                                 {
                                     <span class="d-inline-flex align-items-center gap-1 flex-wrap">
-                                        <NavLink class="deck-link" href="@Utilities.GetDeckUrl(mostPlayedColorInclusionStats.LinkDeckName)">@mostPlayedColorInclusionStats.DeckName</NavLink>
+                                        <span>@mostPlayedColorInclusionStats.DeckName</span>
                                         @if (mostPlayedColorInclusionStats.ColorSymbols.Count > 0)
                                         {
                                             <span class="d-inline-flex align-items-center gap-1 ms-1">
@@ -136,7 +136,7 @@
                                 @if (mostSuccessfulColorInclusionStats is not null)
                                 {
                                     <span class="d-inline-flex align-items-center gap-1 flex-wrap">
-                                        <NavLink class="deck-link" href="@Utilities.GetDeckUrl(mostSuccessfulColorInclusionStats.LinkDeckName)">@mostSuccessfulColorInclusionStats.DeckName</NavLink>
+                                        <span>@mostSuccessfulColorInclusionStats.DeckName</span>
                                         @if (mostSuccessfulColorInclusionStats.ColorSymbols.Count > 0)
                                         {
                                             <span class="d-inline-flex align-items-center gap-1 ms-1">

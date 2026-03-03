@@ -23,3 +23,13 @@
 .tag-badge--minor-trophy {
     --tag-badge-size: 0.8rem;
 }
+
+@media (max-width: 768px) {
+    .tag-badge--major-trophy {
+        --tag-badge-size: 0.9rem;
+    }
+
+    .tag-badge--minor-trophy {
+        --tag-badge-size: 0.5rem;
+    }
+}

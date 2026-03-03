@@ -1,0 +1,43 @@
+.cards-col-divider-left {
+    border-left: 2px solid var(--bs-secondary-color);
+}
+
+.cards-col-divider-right {
+    border-right: 2px solid var(--bs-secondary-color);
+}
+
+.cards-type-cell {
+    font-size: 0.875rem;
+    line-height: 1.2;
+}
+
+.cards-data-table {
+    font-size: 0.875rem;
+}
+
+.cards-data-table > :not(caption) > * > * {
+    padding: 0.35rem 0.45rem;
+}
+
+.cards-data-table thead .btn {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.cards-data-table .text-muted {
+    font-size: 0.875rem;
+}
+
+.cards-color-symbols {
+    line-height: 1;
+}
+
+.cards-color-chip {
+    display: inline-flex;
+    transform: scale(0.9);
+    transform-origin: center;
+}
+
+.cards-table-toolbar {
+    font-size: 0.875rem;
+}

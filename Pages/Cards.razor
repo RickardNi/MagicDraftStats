@@ -4,6 +4,8 @@
 @using MagicDraftStats.Services
 @inject IDeckImportService DeckImportService
 @inject IScryfallCardService ScryfallCardService
+@inject IBGStatsImportService BGStatsService
+@inject IDeckStatsService DeckStatsService
 @inject IJSRuntime JSRuntime
 
 <PageTitle>Magic Draft Stats - Cards</PageTitle>
@@ -126,8 +128,18 @@
 
         <div class="card">
             <div class="card-body">
+                <div class="row g-2 mb-2 cards-table-toolbar">
+                    <div class="col-12 col-md-5 col-lg-4">
+                        <input class="form-control form-control-sm"
+                               type="search"
+                               placeholder="Search cards..."
+                               aria-label="Search cards"
+                               @bind="cardSearchText"
+                               @bind:event="oninput" />
+                    </div>
+                </div>
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover align-middle">
+                    <table class="table table-striped table-hover align-middle cards-data-table">
                         <thead>
                             <tr>
                                 <th>
@@ -152,6 +164,18 @@
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Rarity)">
                                         Rarity
                                         @SortIcon(SortColumn.Rarity)
+                                    </button>
+                                </th>
+                                <th class="text-center">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Plays)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.Plays)">
+                                        Plays
+                                        @SortIcon(SortColumn.Plays)
+                                    </button>
+                                </th>
+                                <th class="text-center">
+                                    <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.WinPercent)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.WinPercent)">
+                                        Win %
+                                        @SortIcon(SortColumn.WinPercent)
                                     </button>
                                 </th>
                                 <th class="text-center">
@@ -201,7 +225,7 @@
                                             @card.CardName
                                         </span>
                                     </td>
-                                    <td>
+                                    <td class="cards-type-cell">
                                         @if (!string.IsNullOrWhiteSpace(card.TypeLine))
                                         {
                                             <span>@card.TypeLine</span>
@@ -214,10 +238,10 @@
                                     <td class="text-center">
                                         @if (card.ColorSymbols.Count > 0)
                                         {
-                                            <div class="d-flex align-items-center justify-content-center gap-1" style="min-width: fit-content;">
+                                            <div class="d-flex align-items-center justify-content-center gap-1 cards-color-symbols">
                                                 @foreach (var symbol in card.ColorSymbols)
                                                 {
-                                                    <ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" />
+                                                    <span class="cards-color-chip"><ColorChip ColorKey="@symbol.ColorKey" IsSplash="@symbol.IsSplash" /></span>
                                                 }
                                             </div>
                                         }
@@ -227,6 +251,8 @@
                                         }
                                     </td>
                                     <td class="text-center">@FoundationsCardCatalog.GetRarityShortLabel(card.Rarity)</td>
+                                    <td class="text-center cards-col-divider-left">@card.PlayCount</td>
+                                    <td class="text-center cards-col-divider-right">@FormatPercent(card.WinPercent)</td>
                                     <td class="text-center">@card.DeckCount</td>
                                     <td class="text-center">@FormatPercent(card.PlayedPercent)</td>
                                     <td class="text-center"><span class="fw-bold text-success-dark">@card.WinnerDeckCount</span></td>
@@ -255,6 +281,7 @@
     private HashSet<string> selectedColorFilters = new(StringComparer.Ordinal);
     private HashSet<string> selectedTypeFilters = new(StringComparer.OrdinalIgnoreCase);
     private HashSet<CardRarity> selectedRarityFilters = new();
+    private string cardSearchText = string.Empty;
     private SortColumn currentSortColumn = SortColumn.WinnerDeckPercent;
     private bool isAscending = false;
 
@@ -276,6 +303,8 @@
         Type,
         Color,
         Rarity,
+        Plays,
+        WinPercent,
         Decks,
         PlayedPercent,
         WinnerDecks,
@@ -306,6 +335,8 @@
                 .Where(item => item.Deck != null)
                 .Select(item => item.Deck!)
                 .ToList();
+            var bgStatsData = await BGStatsService.GetCurrentDataAsync();
+            var plays = bgStatsData?.Plays ?? [];
 
             totalDeckCount = decks.Count;
             totalWinnerDeckCount = decks.Count(deck => deck.Rank == 1);
@@ -315,6 +346,9 @@
             foreach (var deck in decks)
             {
                 var cardsInDeck = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var deckStats = DeckStatsService.CalculateDeckStats(deck, plays);
+                var deckPlayCount = deckStats.Plays;
+                var deckWinCount = deckStats.Wins;
 
                 foreach (var card in deck.Cards.Where(card => card.Count > 0 && !string.IsNullOrWhiteSpace(card.Name)))
                 {
@@ -330,6 +364,8 @@
                     if (cardsInDeck.Add(cardName))
                     {
                         aggregate.DeckCount++;
+                        aggregate.PlayCount += deckPlayCount;
+                        aggregate.WinCount += deckWinCount;
 
                         if (deck.Rank == 1)
                         {
@@ -404,6 +440,8 @@
             IsBasicLand = isBasicLand,
             Rarity = rarity,
             ImageUrl = visual?.ImageUrl ?? $"https://api.scryfall.com/cards/named?exact={Uri.EscapeDataString(aggregate.CardName)}&set=fdn&format=image",
+            PlayCount = aggregate.PlayCount,
+            WinPercent = aggregate.PlayCount > 0 ? (double)aggregate.WinCount / aggregate.PlayCount : null,
             DeckCount = aggregate.DeckCount,
             PlayedPercent = totalDeckCount > 0 ? (double)aggregate.DeckCount / totalDeckCount : null,
             WinnerDeckCount = aggregate.WinnerDeckCount,
@@ -496,8 +534,10 @@
 
             var basicLandAllowed = !row.IsBasicLand || selectedTypeFilters.Contains("Basic Land");
             var matchesRarity = selectedRarityFilters.Contains(row.Rarity);
+            var matchesSearch = string.IsNullOrWhiteSpace(cardSearchText)
+                || row.CardName.Contains(cardSearchText.Trim(), StringComparison.OrdinalIgnoreCase);
 
-            return matchesColor && matchesType && basicLandAllowed && matchesRarity;
+            return matchesColor && matchesType && basicLandAllowed && matchesRarity && matchesSearch;
         });
     }
 
@@ -517,6 +557,12 @@
             SortColumn.Rarity => isAscending
                 ? source.OrderBy(row => GetRaritySortRank(row.Rarity))
                 : source.OrderByDescending(row => GetRaritySortRank(row.Rarity)),
+            SortColumn.Plays => isAscending
+                ? source.OrderBy(row => row.PlayCount)
+                : source.OrderByDescending(row => row.PlayCount),
+            SortColumn.WinPercent => isAscending
+                ? source.OrderBy(row => row.WinPercent ?? -1)
+                : source.OrderByDescending(row => row.WinPercent ?? -1),
             SortColumn.Decks => isAscending
                 ? source.OrderBy(row => row.DeckCount)
                 : source.OrderByDescending(row => row.DeckCount),
@@ -713,6 +759,8 @@
 
     private static string GetStatTooltip(SortColumn column) => column switch
     {
+        SortColumn.Plays => "Total matched plays across all decks that include this card.\n\nUsefulness: Medium (play sample size with this card in real games).",
+        SortColumn.WinPercent => "Deck-level win rate for this card (DWR): total wins from decks that played the card divided by total matches played by decks that played the card.\n\nWhy it helps: uses exact deck membership, does not depend on draw/cast events, and stays stable with smaller samples.",
         SortColumn.Decks => "How many decks include this card at least once.\n\nUsefulness: Low-Medium for card quality (mainly sample size/popularity).",
         SortColumn.PlayedPercent => "Decks with card / all decks.\n\nUsefulness: Low-Medium (mostly popularity/availability).",
         SortColumn.WinnerDecks => "How many rank-1 decks include this card.\n\nUsefulness: Low by itself (biased by popularity).",
@@ -754,6 +802,8 @@
     private sealed class CardAggregate(string cardName)
     {
         public string CardName { get; } = cardName;
+        public int PlayCount { get; set; }
+        public int WinCount { get; set; }
         public int DeckCount { get; set; }
         public int WinnerDeckCount { get; set; }
         public int TotalCopies { get; set; }
@@ -771,6 +821,8 @@
         public bool IsBasicLand { get; set; }
         public CardRarity Rarity { get; set; } = CardRarity.Common;
         public string ImageUrl { get; set; } = string.Empty;
+        public int PlayCount { get; set; }
+        public double? WinPercent { get; set; }
         public int DeckCount { get; set; }
         public int WinnerDeckCount { get; set; }
         public double? PlayedPercent { get; set; }

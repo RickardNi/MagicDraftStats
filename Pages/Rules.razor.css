@@ -16,3 +16,24 @@
         max-width: 320px !important;
     }
 }
+
+.playgroup-rules-content {
+    line-height: 1.5;
+}
+
+.playgroup-rules-content h3 {
+    margin-bottom: 0.5rem;
+}
+
+.playgroup-rules-content p {
+    margin-bottom: 0.5rem;
+}
+
+.playgroup-rules-content ul {
+    margin-top: 0.35rem;
+    margin-bottom: 0.75rem;
+}
+
+.playgroup-rules-content li + li {
+    margin-top: 0.35rem;
+}

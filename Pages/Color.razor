@@ -146,16 +146,18 @@
                     <div class="card-body">
                         @if (deckPlays.Any())
                         {
-                            <ApexChart TItem="FirstPlayerStats" Options="@firstPlayerChartOptions">
-                                <ApexPointSeries TItem="FirstPlayerStats"
-                                                 Items="@firstPlayerStats"
-                                                 Name="Plays"
-                                                 SeriesType="SeriesType.Pie"
-                                                 XValue="@(e => e.Result)"
-                                                 YValue="@(e => e.Count)"
-                                                 PointColor="e => GetPointColor(e)"
-                                                 ShowDataLabels />
-                            </ApexChart>
+                            <div class="d-flex justify-content-center">
+                                <ApexChart TItem="FirstPlayerStats" Options="@firstPlayerChartOptions">
+                                    <ApexPointSeries TItem="FirstPlayerStats"
+                                                     Items="@firstPlayerStats"
+                                                     Name="Plays"
+                                                     SeriesType="SeriesType.Pie"
+                                                     XValue="@(e => e.Result)"
+                                                     YValue="@(e => e.Count)"
+                                                     PointColor="e => GetPointColor(e)"
+                                                     ShowDataLabels />
+                                </ApexChart>
+                            </div>
                             <div class="row text-center mt-3">
                                 <div class="col-6">
                                     <div class="text-success">
@@ -186,16 +188,18 @@
                     <div class="card-body">
                         @if (deckPlays.Any())
                         {
-                            <ApexChart TItem="FirstPlayerStats" Options="@goingSecondChartOptions">
-                                <ApexPointSeries TItem="FirstPlayerStats"
-                                                 Items="@goingSecondStats"
-                                                 Name="Plays"
-                                                 SeriesType="SeriesType.Pie"
-                                                 XValue="@(e => e.Result)"
-                                                 YValue="@(e => e.Count)"
-                                                 PointColor="e => GetPointColor(e)"
-                                                 ShowDataLabels />
-                            </ApexChart>
+                            <div class="d-flex justify-content-center">
+                                <ApexChart TItem="FirstPlayerStats" Options="@goingSecondChartOptions">
+                                    <ApexPointSeries TItem="FirstPlayerStats"
+                                                     Items="@goingSecondStats"
+                                                     Name="Plays"
+                                                     SeriesType="SeriesType.Pie"
+                                                     XValue="@(e => e.Result)"
+                                                     YValue="@(e => e.Count)"
+                                                     PointColor="e => GetPointColor(e)"
+                                                     ShowDataLabels />
+                                </ApexChart>
+                            </div>
                             <div class="row text-center mt-3">
                                 <div class="col-6">
                                     <div class="text-success">

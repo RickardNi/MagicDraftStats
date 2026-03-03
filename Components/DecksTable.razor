@@ -115,7 +115,7 @@ else
                         <td>
                             <div class="d-flex align-items-center gap-2" style="min-width: fit-content;">
                                 <NavLink class="deck-link" href="@($"deck/{Uri.EscapeDataString(deck.DeckId)}")" @onclick:stopPropagation="true">@deck.DeckName</NavLink>
-                                <TagBadges ShowWinner="@(deck.Rank == 1)" />
+                                <TagBadges Type="Badge.ForWinner(deck.Rank == 1 ? deck.PlayerCount : null)" />
                             </div>
                         </td>
                         <td>
@@ -238,4 +238,5 @@ else
             .ThenByDescending(deck => deck.Wins)
             .ThenBy(deck => deck.PlayerName);
     }
+
 }

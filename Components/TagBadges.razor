@@ -1,16 +1,33 @@
-@if (ShowWinner)
+@using MagicDraftStats.Models
+
+@if (Type != BadgeType.None)
 {
-    <div class="@ContainerClass d-flex align-items-center">
-        <span class="badge bg-warning text-dark d-inline-flex align-items-center justify-content-center p-1 lh-1" aria-label="Winner" title="Winner">
-            <i class="bi bi-trophy-fill"></i>
-        </span>
-    </div>
+    <span class="badge @CssClass" aria-label="@Label" title="@Label">
+        <i class="bi @Icon"></i>
+    </span>
 }
 
 @code {
     [Parameter]
-    public bool ShowWinner { get; set; }
+    public BadgeType Type { get; set; }
 
-    [Parameter]
-    public string ContainerClass { get; set; } = "";
+    private string CssClass => Type switch
+    {
+        BadgeType.MajorTrophy => "bg-warning text-dark tag-badge tag-badge--major-trophy",
+        BadgeType.MinorTrophy => "bg-warning text-dark tag-badge tag-badge--minor-trophy",
+        _ => ""
+    };
+
+    private string Icon => Type switch
+    {
+        BadgeType.MajorTrophy or BadgeType.MinorTrophy => "bi-trophy-fill",
+        _ => ""
+    };
+
+    private string Label => Type switch
+    {
+        BadgeType.MajorTrophy => "Winner of a draft with 4+ players",
+        BadgeType.MinorTrophy => "Winner of a draft with 2-3 players",
+        _ => ""
+    };
 }

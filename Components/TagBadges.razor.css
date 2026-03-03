@@ -1,0 +1,25 @@
+.tag-badge {
+    --tag-badge-size: 1.3rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+    width: var(--tag-badge-size);
+    height: var(--tag-badge-size);
+    font-size: calc(var(--tag-badge-size) * 0.55);
+    border-radius: calc(var(--tag-badge-size) * 0.2);
+}
+
+.tag-badge > .bi {
+    font-size: 1em;
+    line-height: 1;
+}
+
+.tag-badge--major-trophy {
+    --tag-badge-size: 1.3rem;
+}
+
+.tag-badge--minor-trophy {
+    --tag-badge-size: 0.8rem;
+}

@@ -4,6 +4,7 @@
 @using MagicDraftStats.Components
 @inject IBGStatsImportService BGStatsService
 @inject IGlobalFilterService GlobalFilterService
+@inject IDeckTableDataService DeckTableDataService
 
 <PageTitle>Magic Draft Stats - Colors</PageTitle>
 
@@ -152,7 +153,10 @@
 
                                 <tr>
                                     <td>
-                                        <NavLink class="deck-link" href="@Utilities.GetDeckUrl(deck.LinkDeckName)">@deck.DeckName</NavLink>
+                                        <div class="d-flex align-items-center gap-2" style="min-width: fit-content;">
+                                            <NavLink class="deck-link" href="@Utilities.GetDeckUrl(deck.LinkDeckName)">@deck.DeckName</NavLink>
+                                            <TagBadges Type="Badge.ForWinner(deck.WinnerPlayerCount)" />
+                                        </div>
                                     </td>
                                     <td>
                                         @if (deck.ColorSymbols.Count > 0)
@@ -510,6 +514,20 @@
             isLoading = true;
 
             var plays = await BGStatsService.GetMagicPlaysAsync(GlobalFilterService.SelectedVariants);
+            var deckTableData = await DeckTableDataService.LoadAsync();
+            var winnerPlayerCountByColorKey = deckTableData.DeckRows
+                .Where(deck => deck.Rank == 1)
+                .GroupBy(deck => BuildColorIdentityKey(deck.ColorSymbols.Select(symbol => symbol.ColorKey).ToList()))
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Max(deck => deck.PlayerCount));
+            var winnerPlayerCountByDeckName = deckTableData.DeckRows
+                .Where(deck => deck.Rank == 1)
+                .GroupBy(deck => deck.DeckName)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Max(deck => deck.PlayerCount));
+
             var scoreEntries = plays
                 .SelectMany(play => play.PlayerScores.Select(score => new PlayerScoreColorEntry(
                     score,
@@ -535,7 +553,10 @@
                         ColorIdentityHelper.GetColorIdentityName(keys),
                         representativeLinkDeckName,
                         keys.Select(color => new DeckColorSymbol(color, false)).ToList(),
-                        group);
+                        group,
+                        Math.Max(
+                            winnerPlayerCountByColorKey.GetValueOrDefault(BuildColorIdentityKey(keys), 0),
+                            winnerPlayerCountByDeckName.GetValueOrDefault(ColorIdentityHelper.GetColorIdentityName(keys), 0)));
                 })
                 .ToList();
 
@@ -876,7 +897,7 @@
             : string.Join('/', colorIdentityKeys.Select(ColorIdentityHelper.GetColorName));
     }
 
-    private static DeckStats CreateDeckStats(string deckName, string linkDeckName, List<DeckColorSymbol> colorSymbols, IEnumerable<PlayerScoreColorEntry> entries)
+    private static DeckStats CreateDeckStats(string deckName, string linkDeckName, List<DeckColorSymbol> colorSymbols, IEnumerable<PlayerScoreColorEntry> entries, int winnerPlayerCount = 0)
     {
         var entryList = entries.ToList();
 
@@ -891,7 +912,8 @@
             FirstPlayerPlays = entryList.Count(entry => entry.Score.IsFirstPlayer),
             FirstPlayerWins = entryList.Count(entry => entry.Score.IsFirstPlayer && entry.Score.IsWinner),
             GoingSecondPlays = entryList.Count(entry => !entry.Score.IsFirstPlayer),
-            GoingSecondWins = entryList.Count(entry => !entry.Score.IsFirstPlayer && entry.Score.IsWinner)
+            GoingSecondWins = entryList.Count(entry => !entry.Score.IsFirstPlayer && entry.Score.IsWinner),
+            WinnerPlayerCount = winnerPlayerCount
         };
     }
 
@@ -912,6 +934,7 @@
         public string DeckName { get; set; } = string.Empty;
         public string LinkDeckName { get; set; } = string.Empty;
         public List<DeckColorSymbol> ColorSymbols { get; set; } = new();
+        public int WinnerPlayerCount { get; set; }
         public int TotalPlays { get; set; }
         public int Wins { get; set; }
         public int Losses { get; set; }

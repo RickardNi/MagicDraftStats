@@ -26,6 +26,12 @@
     -webkit-user-select: text;
 }
 
+.cards-nowrap-header,
+.cards-nowrap-header .btn,
+.cards-nowrap-cell {
+    white-space: nowrap;
+}
+
 .cards-data-table .text-muted {
     font-size: 0.875rem;
 }
@@ -58,4 +64,31 @@
 
 .cards-less-significant .btn {
     color: inherit;
+}
+
+.cards-card-name-cell {
+    min-width: 14rem;
+}
+
+.cards-card-name-text {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+}
+
+@media (max-width: 768px) {
+    .cards-table-toolbar {
+        margin-bottom: 1.5rem !important;
+    }
+
+    .cards-type-column {
+        display: none;
+    }
+
+    .cards-card-name-cell {
+        min-width: 8rem;
+    }
 }

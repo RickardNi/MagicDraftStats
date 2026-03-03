@@ -142,13 +142,13 @@
                     <table class="table table-striped table-hover align-middle cards-data-table">
                         <thead>
                             <tr>
-                                <th>
+                                <th class="cards-card-column">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.CardName)">
                                         Card
                                         @SortIcon(SortColumn.CardName)
                                     </button>
                                 </th>
-                                <th>
+                                <th class="cards-type-column">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Type)">
                                         Type
                                         @SortIcon(SortColumn.Type)
@@ -166,55 +166,55 @@
                                         @SortIcon(SortColumn.Rarity)
                                     </button>
                                 </th>
-                                <th class="text-center">
+                                <th class="text-center cards-nowrap-header">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Plays)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.Plays)">
                                         Plays
                                         @SortIcon(SortColumn.Plays)
                                     </button>
                                 </th>
-                                <th class="text-center">
+                                <th class="text-center cards-nowrap-header">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.WinPercent)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.WinPercent)">
                                         Win %
                                         @SortIcon(SortColumn.WinPercent)
                                     </button>
                                 </th>
-                                <th class="text-center">
+                                <th class="text-center cards-nowrap-header">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Rwc)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.Rwc)">
                                         RWC
                                         @SortIcon(SortColumn.Rwc)
                                     </button>
                                 </th>
-                                <th class="text-center">
+                                <th class="text-center cards-nowrap-header">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.Decks)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.Decks)">
                                         Decks
                                         @SortIcon(SortColumn.Decks)
                                     </button>
                                 </th>
-                                <th class="text-center">
+                                <th class="text-center cards-nowrap-header">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.PlayedPercent)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.PlayedPercent)">
                                         Played %
                                         @SortIcon(SortColumn.PlayedPercent)
                                     </button>
                                 </th>
-                                <th class="text-center cards-less-significant">
+                                <th class="text-center cards-less-significant cards-nowrap-header">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.WinnerDecks)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.WinnerDecks)">
                                         Winner Decks
                                         @SortIcon(SortColumn.WinnerDecks)
                                     </button>
                                 </th>
-                                <th class="text-center cards-less-significant">
+                                <th class="text-center cards-less-significant cards-nowrap-header">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.WinnerDeckPercent)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.WinnerDeckPercent)">
                                         Winner Deck %
                                         @SortIcon(SortColumn.WinnerDeckPercent)
                                     </button>
                                 </th>
-                                <th class="text-center">
+                                <th class="text-center cards-nowrap-header">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.WinnerSharePercent)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.WinnerSharePercent)">
                                         Win Share
                                         @SortIcon(SortColumn.WinnerSharePercent)
                                     </button>
                                 </th>
-                                <th class="text-center cards-less-significant">
+                                <th class="text-center cards-less-significant cards-nowrap-header">
                                     <button class="btn btn-link text-decoration-none p-0 fw-bold" @onclick="() => SortBy(SortColumn.AverageRank)" data-bs-toggle="tooltip" data-bs-custom-class="cards-stat-tooltip" data-bs-title="@GetStatTooltip(SortColumn.AverageRank)">
                                         Avg Rank
                                         @SortIcon(SortColumn.AverageRank)
@@ -226,12 +226,12 @@
                             @foreach (var card in GetSortedRows(filteredRows))
                             {
                                 <tr>
-                                    <td>
-                                        <span class="fw-semibold" data-preview-url="@card.ImageUrl" data-preview-alt="@card.CardName" onmouseenter="DeckVisualTooltip.show(event, this)" onmousemove="DeckVisualTooltip.move(event, this)" onmouseleave="DeckVisualTooltip.hide()">
+                                    <td class="cards-card-column cards-card-name-cell">
+                                        <span class="fw-semibold cards-card-name-text" data-preview-url="@card.ImageUrl" data-preview-alt="@card.CardName" onmouseenter="DeckVisualTooltip.show(event, this)" onmousemove="DeckVisualTooltip.move(event, this)" onmouseleave="DeckVisualTooltip.hide()">
                                             @card.CardName
                                         </span>
                                     </td>
-                                    <td class="cards-type-cell">
+                                    <td class="cards-type-cell cards-type-column">
                                         @if (!string.IsNullOrWhiteSpace(card.TypeLine))
                                         {
                                             <span>@card.TypeLine</span>
@@ -257,15 +257,15 @@
                                         }
                                     </td>
                                     <td class="text-center">@FoundationsCardCatalog.GetRarityShortLabel(card.Rarity)</td>
-                                    <td class="text-center cards-col-divider-left">@card.PlayCount</td>
-                                    <td class="text-center"><span class="@Utilities.GetDeckWinRateClass(card.WinPercent)">@FormatPercent(card.WinPercent)</span></td>
-                                    <td class="text-center cards-col-divider-right">@FormatPercent(card.Rwc)</td>
-                                    <td class="text-center">@card.DeckCount</td>
-                                    <td class="text-center">@FormatPercent(card.PlayedPercent)</td>
-                                    <td class="text-center cards-less-significant">@card.WinnerDeckCount</td>
-                                    <td class="text-center cards-less-significant">@FormatPercent(card.WinnerDeckPercent)</td>
-                                    <td class="text-center">@FormatPercent(card.WinnerSharePercent)</td>
-                                    <td class="text-center cards-less-significant">@FormatAverageRank(card.AverageRank)</td>
+                                    <td class="text-center cards-col-divider-left cards-nowrap-cell">@card.PlayCount</td>
+                                    <td class="text-center cards-nowrap-cell"><span class="@Utilities.GetDeckWinRateClass(card.WinPercent)">@FormatPercent(card.WinPercent)</span></td>
+                                    <td class="text-center cards-col-divider-right cards-nowrap-cell">@FormatPercent(card.Rwc)</td>
+                                    <td class="text-center cards-nowrap-cell">@card.DeckCount</td>
+                                    <td class="text-center cards-nowrap-cell">@FormatPercent(card.PlayedPercent)</td>
+                                    <td class="text-center cards-less-significant cards-nowrap-cell">@card.WinnerDeckCount</td>
+                                    <td class="text-center cards-less-significant cards-nowrap-cell">@FormatPercent(card.WinnerDeckPercent)</td>
+                                    <td class="text-center cards-nowrap-cell">@FormatPercent(card.WinnerSharePercent)</td>
+                                    <td class="text-center cards-less-significant cards-nowrap-cell">@FormatAverageRank(card.AverageRank)</td>
                                 </tr>
                             }
                         </tbody>

@@ -258,7 +258,7 @@
                                     </td>
                                     <td class="text-center">@FoundationsCardCatalog.GetRarityShortLabel(card.Rarity)</td>
                                     <td class="text-center cards-col-divider-left">@card.PlayCount</td>
-                                    <td class="text-center">@FormatPercent(card.WinPercent)</td>
+                                    <td class="text-center"><span class="@Utilities.GetDeckWinRateClass(card.WinPercent)">@FormatPercent(card.WinPercent)</span></td>
                                     <td class="text-center cards-col-divider-right">@FormatPercent(card.Rwc)</td>
                                     <td class="text-center">@card.DeckCount</td>
                                     <td class="text-center">@FormatPercent(card.PlayedPercent)</td>

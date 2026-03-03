@@ -184,7 +184,7 @@ else
         return Task.CompletedTask;
     }
 
-    private RenderFragment<DeckCardVisual> RenderStackCard => card => @<div class="stack-card" data-preview-url="@card.ImageUrl" data-preview-alt="@card.Name" onmouseenter="DeckVisualTooltip.show(event, this)" onmousemove="DeckVisualTooltip.move(event, this)" onmouseleave="DeckVisualTooltip.hide()">
+    private RenderFragment<DeckCardVisual> RenderStackCard => card => @<div class="stack-card" data-preview-url="@card.ImageUrl" data-preview-alt="@card.Name" onmouseenter="DeckVisualTooltip.show(event, this)" onmousemove="DeckVisualTooltip.move(event, this)" onmouseleave="DeckVisualTooltip.hide()" onclick="return DeckVisualTooltip.onCardClick(event, this)">
         @if (!string.IsNullOrWhiteSpace(card.ScryfallUrl))
         {
             <a href="@card.ScryfallUrl" target="_blank" rel="noopener" class="text-decoration-none d-block">

@@ -1,6 +1,33 @@
 window.DeckVisualTooltip = (function () {
     const previewId = 'deck-visual-hover-preview';
 
+    function isTouchContext() {
+        return window.matchMedia('(hover: none), (pointer: coarse)').matches
+            || 'ontouchstart' in window
+            || navigator.maxTouchPoints > 0;
+    }
+
+    function getEventCoords(event, fallbackElement) {
+        const touch = event?.touches?.[0] || event?.changedTouches?.[0];
+        if (touch) {
+            return { clientX: touch.clientX, clientY: touch.clientY };
+        }
+
+        if (typeof event?.clientX === 'number' && typeof event?.clientY === 'number') {
+            return { clientX: event.clientX, clientY: event.clientY };
+        }
+
+        if (fallbackElement?.getBoundingClientRect) {
+            const rect = fallbackElement.getBoundingClientRect();
+            return {
+                clientX: rect.left + (rect.width / 2),
+                clientY: rect.top + (rect.height / 2)
+            };
+        }
+
+        return { clientX: 0, clientY: 0 };
+    }
+
     function ensurePreviewElement() {
         let preview = document.getElementById(previewId);
         if (preview) {
@@ -67,8 +94,7 @@ window.DeckVisualTooltip = (function () {
         return null;
     }
 
-    function updateFromEvent(event, element) {
-        const card = resolveCard(event, element);
+    function showForCard(card, clientX, clientY) {
         if (!card) {
             return;
         }
@@ -92,7 +118,13 @@ window.DeckVisualTooltip = (function () {
 
         image.alt = alt;
         preview.style.display = 'block';
-        position(preview, event?.clientX ?? 0, event?.clientY ?? 0);
+        position(preview, clientX, clientY);
+    }
+
+    function updateFromEvent(event, element) {
+        const card = resolveCard(event, element);
+        const coords = getEventCoords(event, card);
+        showForCard(card, coords.clientX, coords.clientY);
     }
 
     function hide() {
@@ -102,9 +134,34 @@ window.DeckVisualTooltip = (function () {
         }
     }
 
+    function onCardClick(event, element) {
+        const card = resolveCard(event, element);
+        if (!card) {
+            return true;
+        }
+
+        if (!isTouchContext()) {
+            return true;
+        }
+
+        const coords = getEventCoords(event, card);
+        showForCard(card, coords.clientX, coords.clientY);
+
+        if (event?.preventDefault) {
+            event.preventDefault();
+        }
+
+        if (event?.stopPropagation) {
+            event.stopPropagation();
+        }
+
+        return false;
+    }
+
     return {
         show: updateFromEvent,
         move: updateFromEvent,
-        hide
+        hide,
+        onCardClick
     };
 })();

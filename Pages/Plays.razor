@@ -150,7 +150,7 @@
             
             // Set default date range to earliest and latest dates in plays
             var validDates = plays.Where(p => DateTime.TryParse(p.Date, out _))
-                                 .Select(p => DateTime.Parse(p.Date))
+                                 .Select(p => DateTime.Parse(p.Date).Date)
                                  .ToList();
             
             if (validDates.Any())
@@ -215,12 +215,14 @@
         // Apply date filter
         if (startDate.HasValue)
         {
-            query = query.Where(p => DateTime.TryParse(p.Date, out var playDate) && playDate >= startDate.Value);
+            var startDateOnly = startDate.Value.Date;
+            query = query.Where(p => DateTime.TryParse(p.Date, out var playDate) && playDate.Date >= startDateOnly);
         }
         
         if (endDate.HasValue)
         {
-            query = query.Where(p => DateTime.TryParse(p.Date, out var playDate) && playDate <= endDate.Value);
+            var endDateOnly = endDate.Value.Date;
+            query = query.Where(p => DateTime.TryParse(p.Date, out var playDate) && playDate.Date <= endDateOnly);
         }
 
         // Apply player filter
@@ -256,7 +258,7 @@
     {
         // Reset to earliest and latest dates in plays
         var validDates = plays.Where(p => DateTime.TryParse(p.Date, out _))
-                             .Select(p => DateTime.Parse(p.Date))
+                     .Select(p => DateTime.Parse(p.Date).Date)
                              .ToList();
         
         if (validDates.Any())

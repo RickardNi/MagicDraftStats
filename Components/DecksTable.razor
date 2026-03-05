@@ -154,7 +154,7 @@ else
                             }
                         </td>
                         <td class="text-center">
-                            <span class="fw-bold @(deck.Rank == 1 ? "text-success-dark" : "text-warning")">@deck.Rank / @deck.PlayerCount</span>
+                            <span class="fw-bold @GetRankTextClass(deck)">@deck.Rank / @deck.PlayerCount</span>
                         </td>
                         <td class="text-center">@deck.Plays</td>
                         <td class="text-center"><span class="text-success fw-bold">@deck.Wins</span></td>
@@ -237,6 +237,26 @@ else
             .ThenByDescending(deck => deck.Date)
             .ThenByDescending(deck => deck.Wins)
             .ThenBy(deck => deck.PlayerName);
+    }
+
+    private static string GetRankTextClass(DeckTableRow deck)
+    {
+        if (deck.Rank == 1)
+        {
+            return "text-success-dark";
+        }
+
+        if (deck.Wins > deck.Losses)
+        {
+            return "text-success";
+        }
+
+        if (deck.Wins == deck.Losses)
+        {
+            return "text-warning";
+        }
+
+        return "text-danger";
     }
 
 }

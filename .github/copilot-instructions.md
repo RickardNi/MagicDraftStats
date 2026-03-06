@@ -3,7 +3,7 @@
 ## General Guidelines
 - Prefer using the latest versions of all packages and avoid downgrades whenever possible.
 - Prefer clean, readable, maintainable code.
-- Avoid duplicated code when possible; prefer reusing existing logic and components.
+- Avoid duplicated code; prefer reusing existing logic and components. If reusable components or services do not already exist and the shared functionality is non-trivial, consider extracting it into sub-components or services rather than duplicating it across pages.
 - Avoid hard-coded styling in Razor pages; prefer using component/page CSS files instead when possible and convenient.
 
 ## Responsive Design

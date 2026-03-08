@@ -1,7 +1,8 @@
 {
   "playerRefId": 3,
-  "date": "2026-03-06",
-  "rank": 2,
+  "date": "2026-03-07",
+  "additionalDates": ["2026-03-08"],
+  "rank": 1,
   "playerCount": 2,
   "deckSize": 40,
   "cards": [
@@ -11,7 +12,7 @@
     { "name": "Heartfire Immolator", "count": 1 },
     { "name": "Viashino Pyromancer", "count": 1 },
     { "name": "Skyknight Squire", "count": 1 },
-    { "name": "Slumbering Cerberus", "count": 1 },
+    { "name": "Angel of Finality", "count": 1 },
     { "name": "Giada, Font of Hope", "count": 1 },
     { "name": "Taurean Mauler", "count": 1 },
     { "name": "Ajani, Caller of the Pride", "count": 1 },
@@ -43,7 +44,7 @@
     { "name": "Involuntary Employment", "count": 1 },
     { "name": "Ramos, Dragon Engine", "count": 1 },
     { "name": "Deadly Riposte", "count": 1 },
-    { "name": "Angel of Finality", "count": 1 },
+    { "name": "Slumbering Cerberus", "count": 1 },
     { "name": "Grappling Kraken", "count": 1 },
     { "name": "Voracious Greatshark", "count": 1 },
     { "name": "Vampire Nighthawk", "count": 1 },

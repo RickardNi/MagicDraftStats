@@ -33,12 +33,22 @@
                         <button class="btn btn-primary" @onclick="CreateMatchups">
                             Randomize Matches
                         </button>
+                        <button class="btn btn-primary" @onclick="RandomizeSeatingOrder">
+                            Randomize Seating Order
+                        </button>
                     </div>
                     
                     @if (!string.IsNullOrEmpty(processedResult))
                     {
                         <div class="mt-3">
                             <div class="matches-result">@((MarkupString)processedResult)</div>
+                        </div>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(seatingResult))
+                    {
+                        <div class="mt-3">
+                            <div class="seating-result">@((MarkupString)seatingResult)</div>
                         </div>
                     }
                 </div>
@@ -166,6 +176,7 @@
 @code {
     private string playerNamesText = "";
     private string processedResult = "";
+    private string seatingResult = "";
     private List<Play>? playsWithoutOneWinner;
     private List<Play>? playsWithoutOneStartPlayer;
 
@@ -280,5 +291,37 @@
         }
 
         processedResult += "</table>";
+    }
+
+    private void RandomizeSeatingOrder()
+    {
+        if (string.IsNullOrWhiteSpace(playerNamesText))
+        {
+            seatingResult = "No player names entered.";
+            return;
+        }
+
+        var players = playerNamesText.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                                   .Select(line => line.Trim())
+                                   .Where(line => !string.IsNullOrWhiteSpace(line))
+                                   .ToList();
+
+        if (players.Count == 0)
+        {
+            seatingResult = "No valid player names found.";
+            return;
+        }
+
+        var random = new Random();
+        var shuffledPlayers = players.OrderBy(x => random.Next()).ToList();
+
+        var sb = new System.Text.StringBuilder();
+        sb.Append("<div class='seating-order'>");
+
+        for (int i = 0; i < shuffledPlayers.Count; i++)
+            sb.Append($"<div class='seating-row'><strong>Seat {i + 1}:</strong> {shuffledPlayers[i]}</div>");
+
+        sb.Append("</div>");
+        seatingResult = sb.ToString();
     }
 } 

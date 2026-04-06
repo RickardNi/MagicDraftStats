@@ -22,7 +22,10 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-      
+
+    - name: Remove preinstalled .NET SDKs
+      run: sudo rm -rf /usr/share/dotnet
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:

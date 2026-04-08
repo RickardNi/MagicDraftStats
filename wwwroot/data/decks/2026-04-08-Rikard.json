@@ -1,0 +1,32 @@
+{
+  "playerRefId": 44,
+  "date": "2026-04-08",
+  "rank": 1,
+  "playerCount": 4,
+  "deckSize": 40,
+  "cards": [
+    { "name": "Llanowar Elves", "count": 2 },
+    { "name": "Dragonmaster Outcast", "count": 1 },
+    { "name": "Kellan, Planar Trailblazer", "count": 1 },
+    { "name": "Nessian Hornbeetle", "count": 1 },
+    { "name": "Searslicer Goblin", "count": 1 },
+    { "name": "Ruby, Daring Tracker", "count": 1 },
+    { "name": "Wildborn Preserver", "count": 1 },
+    { "name": "Scavenging Ooze", "count": 1 },
+    { "name": "Mossborn Hydra", "count": 1 },
+    { "name": "Flamewake Phoenix", "count": 1 },
+    { "name": "Ghalta, Primal Hunger", "count": 1 },
+    { "name": "Redcap Gutter-Dweller", "count": 1 },
+    { "name": "Gorehorn Raider", "count": 1 },
+    { "name": "Ashroot Animist", "count": 1 },
+    { "name": "Burst Lightning", "count": 2 },
+    { "name": "Primal Might", "count": 1 },
+    { "name": "Abrade", "count": 1 },
+    { "name": "Scorching Dragonfire", "count": 1 },
+    { "name": "Obliterating Bolt", "count": 1 },
+    { "name": "Bite Down", "count": 1 },
+    { "name": "Felling Blow", "count": 1 },
+    { "name": "Mountain", "count": 9 },
+    { "name": "Forest", "count": 8 }
+  ]
+}

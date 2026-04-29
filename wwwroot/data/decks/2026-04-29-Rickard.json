@@ -1,0 +1,42 @@
+{
+  "playerRefId": 2,
+  "date": "2026-04-29",
+  "rank": 2,
+  "playerCount": 6,
+  "deckSize": 40,
+  "cards": [
+    { "name": "Fumigate", "count": 1 },
+    { "name": "Lyra Dawnbringer", "count": 1 },
+    { "name": "Valkyrie's Call", "count": 1 },
+    { "name": "Stroke of Midnight", "count": 1 },
+    { "name": "Faebloom Trick", "count": 1 },
+    { "name": "Stasis Snare", "count": 1 },
+    { "name": "Inspiring Overseer", "count": 1 },
+    { "name": "Ajani, Caller of the Pride", "count": 1 },
+    { "name": "Mentor of the Meek", "count": 1 },
+    { "name": "Exclusion Mage", "count": 1 },
+    { "name": "Arahbo, the First Fang", "count": 1 },
+    { "name": "Pacifism", "count": 1 },
+    { "name": "Think Twice", "count": 1 },
+    { "name": "Chart a Course", "count": 1 },
+    { "name": "Mystic Archaeologist", "count": 1 },
+    { "name": "Charming Prince", "count": 1 },
+    { "name": "Skyknight Squire", "count": 1 },
+    { "name": "Youthful Valkyrie", "count": 1 },
+    { "name": "Helpful Hunter", "count": 1 },
+    { "name": "Sun-Blessed Healer", "count": 1 },
+    { "name": "Joust Through", "count": 1 },
+    { "name": "Spectral Sailor", "count": 1 },
+    { "name": "Hinterland Sanctifier", "count": 1 },
+    { "name": "Island", "count": 6 },
+    { "name": "Plains", "count": 11 }
+  ],
+  "sideboard": [
+    { "name": "Aegis Turtle", "count": 1 },
+    { "name": "Archmage of Runes", "count": 1 },
+    { "name": "Ancestor Dragon", "count": 1 },
+    { "name": "Arcanis the Omnipotent", "count": 1 },
+    { "name": "Make Your Move", "count": 1 },
+    { "name": "Mazemind Tome", "count": 1 }
+  ]
+}

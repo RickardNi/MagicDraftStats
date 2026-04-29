@@ -525,7 +525,8 @@
         if (selectedTypeFilters.Count == 0)
         {
             selectedTypeFilters = availableTypeFilters
-                .Where(type => !type.Equals("Basic Land", StringComparison.OrdinalIgnoreCase))
+                .Where(type => !type.Equals("Basic Land", StringComparison.OrdinalIgnoreCase)
+                               && !type.Equals("Land", StringComparison.OrdinalIgnoreCase))
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
         }
         else
@@ -534,7 +535,8 @@
             if (selectedTypeFilters.Count == 0)
             {
                 selectedTypeFilters = availableTypeFilters
-                    .Where(type => !type.Equals("Basic Land", StringComparison.OrdinalIgnoreCase))
+                    .Where(type => !type.Equals("Basic Land", StringComparison.OrdinalIgnoreCase)
+                                   && !type.Equals("Land", StringComparison.OrdinalIgnoreCase))
                     .ToHashSet(StringComparer.OrdinalIgnoreCase);
             }
         }
@@ -678,7 +680,8 @@
     {
         selectedColorFilters = colorFilterOrder.ToHashSet(StringComparer.Ordinal);
         selectedTypeFilters = availableTypeFilters
-            .Where(type => !type.Equals("Basic Land", StringComparison.OrdinalIgnoreCase))
+            .Where(type => !type.Equals("Basic Land", StringComparison.OrdinalIgnoreCase)
+                           && !type.Equals("Land", StringComparison.OrdinalIgnoreCase))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         selectedRarityFilters = rarityFilterOrder.ToHashSet();
     }

@@ -1,0 +1,33 @@
+{
+  "playerRefId": 6,
+  "date": "2026-05-04",
+  "rank": 2,
+  "playerCount": 3,
+  "deckSize": 40,
+  "cards": [
+    { "name": "Healer's Hawk", "count": 1 },
+    { "name": "Dawnwing Marshal", "count": 1 },
+    { "name": "Skyknight Squire", "count": 1 },
+    { "name": "Helpful Hunter", "count": 1 },
+    { "name": "Resolute Reinforcements", "count": 1 },
+    { "name": "Cat Collector", "count": 1 },
+    { "name": "Dazzling Angel", "count": 1 },
+    { "name": "Prideful Parent", "count": 1 },
+    { "name": "Jazal Goldmane", "count": 1 },
+    { "name": "Felidar Savior", "count": 1 },
+    { "name": "Vanguard Seraph", "count": 1 },
+    { "name": "Lyra Dawnbringer", "count": 1 },
+    { "name": "Regal Caracal", "count": 1 },
+    { "name": "Claws Out", "count": 1 },
+    { "name": "Valkyrie's Call", "count": 1 },
+    { "name": "Sire of Seven Deaths", "count": 1 },
+    { "name": "Herald of Eternal Dawn", "count": 1 },
+    { "name": "Joust Through", "count": 1 },
+    { "name": "Basilisk Collar", "count": 1 },
+    { "name": "Pacifism", "count": 1 },
+    { "name": "Luminous Rebuke", "count": 1 },
+    { "name": "Celestial Armor", "count": 1 },
+    { "name": "Felidar Retreat", "count": 1 },
+    { "name": "Plains", "count": 17 }
+  ]
+}

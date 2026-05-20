@@ -558,7 +558,7 @@
                                         {
                                             <tr>
                                                 <td>
-                                                    <NavLink class="player-link" href="@($"/player/{opponent.OpponentPlayerId}")">@opponent.OpponentName</NavLink>
+                                                    <NavLink class="player-link" href="@Utilities.GetPlayerUrl(opponent.OpponentPlayerId)">@opponent.OpponentName</NavLink>
                                                 </td>
                                                 <td class="text-center">@opponent.TotalGames</td>
                                                 <td class="text-center text-success">@opponent.Wins</td>

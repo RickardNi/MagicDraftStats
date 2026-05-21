@@ -1,4 +1,4 @@
-﻿@using MagicDraftStats.Services
+@using MagicDraftStats.Services
 @inject IBGStatsImportService BGStatsService
 @inject IGlobalFilterService GlobalFilterService
 
@@ -135,9 +135,7 @@
         var currentData = await BGStatsService.GetCurrentDataAsync();
         var allPlays = currentData?.Plays ?? [];
 
-        availableSets = VariantDefinitions.SetVariants
-            .OrderBy(v => v)
-            .ToList();
+        availableSets = [.. VariantDefinitions.SetVariantsOrdered];
 
         availableVariantTokens = allPlays
             .SelectMany(p => VariantDefinitions.SplitVariantTokens(p.Variant))

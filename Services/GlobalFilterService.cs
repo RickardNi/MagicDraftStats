@@ -94,10 +94,14 @@ public class GlobalFilterService : IGlobalFilterService
 
 public static class VariantDefinitions
 {
-    public static readonly HashSet<string> SetVariants = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "Magic Foundations Cube"
-    };
+    public static readonly string[] SetVariantsOrdered =
+    [
+        "Magic Foundations Cube",
+        "Twobert Variant Cube",
+        "Gatecrash Cube"
+    ];
+
+    public static readonly HashSet<string> SetVariants = new(SetVariantsOrdered, StringComparer.OrdinalIgnoreCase);
 
     public const string RequiredVariant = "Draft";
 

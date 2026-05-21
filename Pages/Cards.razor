@@ -116,8 +116,24 @@
                     </div>
                 </div>
                 <div class="row mt-3">
+                    <div class="col-12 col-md-6">
+                        <label for="minPlaysFilter" class="form-label fw-bold">
+                            Minimum Plays: @minPlaysFilter
+                        </label>
+                        <input type="range" 
+                               class="form-range" 
+                               id="minPlaysFilter" 
+                               value="@minPlaysFilter"
+                               @oninput="@((ChangeEventArgs e) => { minPlaysFilter = int.Parse(e.Value?.ToString() ?? "20"); })"
+                               @onchange="@((ChangeEventArgs e) => { minPlaysFilter = int.Parse(e.Value?.ToString() ?? "20"); })"
+                               min="1" 
+                               max="@maxPlayCount" 
+                               step="1" />
+                    </div>
+                </div>
+                <div class="row mt-3">
                     <div class="col-12 col-md-3">
-                        <button class="btn btn-secondary w-100" @onclick="ResetFilters">
+                        <button class="btn btn-secondary w-100" @onclick="ResetFilters" disabled="@IsFiltersDefault">
                             <i class="bi bi-arrow-clockwise me-1"></i>Reset Filters
                         </button>
                     </div>
@@ -291,6 +307,8 @@
     private string cardSearchText = string.Empty;
     private SortColumn currentSortColumn = SortColumn.Plays;
     private bool isAscending = false;
+    private int minPlaysFilter = 20;
+    private int maxPlayCount = 100;
 
     private static readonly string[] TypeFilterDisplayOrder =
     [
@@ -509,6 +527,10 @@
             .ThenBy(type => type, StringComparer.Ordinal)
             .ToList();
 
+        maxPlayCount = cardRows.Count > 0 ? cardRows.Max(row => row.PlayCount) : 100;
+        if (maxPlayCount < 1) maxPlayCount = 1;
+        if (minPlaysFilter > maxPlayCount) minPlaysFilter = 1;
+
         if (selectedColorFilters.Count == 0)
         {
             selectedColorFilters = colorFilterOrder.ToHashSet(StringComparer.Ordinal);
@@ -574,8 +596,9 @@
             var matchesRarity = selectedRarityFilters.Contains(row.Rarity);
             var matchesSearch = string.IsNullOrWhiteSpace(cardSearchText)
                 || row.CardName.Contains(cardSearchText.Trim(), StringComparison.OrdinalIgnoreCase);
+            var matchesMinPlays = row.PlayCount >= minPlaysFilter;
 
-            return matchesColor && matchesType && basicLandAllowed && matchesRarity && matchesSearch;
+            return matchesColor && matchesType && basicLandAllowed && matchesRarity && matchesSearch && matchesMinPlays;
         });
     }
 
@@ -676,6 +699,15 @@
         selectedTypeFilters.Clear();
     }
 
+    private bool IsFiltersDefault =>
+        selectedColorFilters.SetEquals(colorFilterOrder) &&
+        selectedRarityFilters.SetEquals(rarityFilterOrder) &&
+        selectedTypeFilters.SetEquals(
+            availableTypeFilters
+                .Where(type => !type.Equals("Basic Land", StringComparison.OrdinalIgnoreCase)
+                               && !type.Equals("Land", StringComparison.OrdinalIgnoreCase))) &&
+        minPlaysFilter == 20;
+
     private void ResetFilters()
     {
         selectedColorFilters = colorFilterOrder.ToHashSet(StringComparer.Ordinal);
@@ -684,6 +716,7 @@
                            && !type.Equals("Land", StringComparison.OrdinalIgnoreCase))
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
         selectedRarityFilters = rarityFilterOrder.ToHashSet();
+        minPlaysFilter = 20;
     }
 
     private void OnRarityFilterChanged(CardRarity rarity, object? value)

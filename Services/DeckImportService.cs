@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text.Json;
 using MagicDraftStats.Models;
@@ -7,14 +8,15 @@ namespace MagicDraftStats.Services;
 public interface IDeckImportService
 {
     Task<DeckBatchImportResult> LoadAndValidateDecksAsync(string manifestPath = "data/decks.json");
+    void ResetCache();
 }
 
-public class DeckImportService(HttpClient httpClient, ILogger<DeckImportService> logger, IBGStatsImportService bgStatsImportService) : IDeckImportService
+public class DeckImportService : IDeckImportService
 {
     private const string DeckFilesFolder = "data/decks";
-    private readonly HttpClient _httpClient = httpClient;
-    private readonly ILogger<DeckImportService> _logger = logger;
-    private readonly IBGStatsImportService _bgStatsImportService = bgStatsImportService;
+    private readonly HttpClient _httpClient;
+    private readonly ILogger<DeckImportService> _logger;
+    private readonly IBGStatsImportService _bgStatsImportService;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -22,6 +24,34 @@ public class DeckImportService(HttpClient httpClient, ILogger<DeckImportService>
         AllowTrailingCommas = true,
         ReadCommentHandling = JsonCommentHandling.Skip
     };
+
+    // Cache fields
+    private readonly SemaphoreSlim _lock = new(1, 1);
+    private DeckIndex? _cachedIndex;
+    private readonly ConcurrentDictionary<string, CachedDeckFile> _cachedDecks = new(StringComparer.OrdinalIgnoreCase);
+
+    private class CachedDeckFile
+    {
+        public DeckFile? Deck { get; set; }
+        public List<DeckValidationMessage> LoadErrors { get; set; } = [];
+    }
+
+    public DeckImportService(HttpClient httpClient, ILogger<DeckImportService> logger, IBGStatsImportService bgStatsImportService)
+    {
+        _httpClient = httpClient;
+        _logger = logger;
+        _bgStatsImportService = bgStatsImportService;
+        
+        // Listen to BGStats data import event to clear the validation cache/reset if players database changes
+        _bgStatsImportService.OnDataImported += ResetCache;
+    }
+
+    public void ResetCache()
+    {
+        _cachedIndex = null;
+        _cachedDecks.Clear();
+        _logger.LogInformation("DeckImportService cache has been reset.");
+    }
 
     public async Task<DeckBatchImportResult> LoadAndValidateDecksAsync(string manifestPath = "data/decks.json")
     {
@@ -33,27 +63,43 @@ public class DeckImportService(HttpClient httpClient, ILogger<DeckImportService>
             .ToHashSet() ?? [];
 
         DeckIndex? index;
+        await _lock.WaitAsync();
         try
         {
-            var indexJson = await _httpClient.GetStringAsync(manifestPath);
-            index = JsonSerializer.Deserialize<DeckIndex>(indexJson, JsonOptions);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Could not read deck manifest file at {ManifestPath}", manifestPath);
-            result.Items.Add(new DeckImportItemResult
+            if (_cachedIndex != null)
             {
-                FilePath = manifestPath,
-                ValidationMessages =
-                [
-                    new DeckValidationMessage(
-                        DeckValidationSeverity.Error,
-                        "MANIFEST_READ_FAILED",
-                        $"Could not read deck manifest file: {manifestPath}")
-                ]
-            });
+                index = _cachedIndex;
+            }
+            else
+            {
+                try
+                {
+                    var indexJson = await _httpClient.GetStringAsync(manifestPath);
+                    index = JsonSerializer.Deserialize<DeckIndex>(indexJson, JsonOptions);
+                    _cachedIndex = index;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Could not read deck manifest file at {ManifestPath}", manifestPath);
+                    result.Items.Add(new DeckImportItemResult
+                    {
+                        FilePath = manifestPath,
+                        ValidationMessages =
+                        [
+                            new DeckValidationMessage(
+                                DeckValidationSeverity.Error,
+                                "MANIFEST_READ_FAILED",
+                                $"Could not read deck manifest file: {manifestPath}")
+                        ]
+                    });
 
-            return result;
+                    return result;
+                }
+            }
+        }
+        finally
+        {
+            _lock.Release();
         }
 
         if (index?.Files == null || index.Files.Count == 0)
@@ -62,10 +108,41 @@ public class DeckImportService(HttpClient httpClient, ILogger<DeckImportService>
             return result;
         }
 
-        foreach (var manifestEntry in index.Files.Where(f => !string.IsNullOrWhiteSpace(f)).Distinct(StringComparer.OrdinalIgnoreCase))
+        var manifestEntries = index.Files
+            .Where(f => !string.IsNullOrWhiteSpace(f))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        // Process file fetching and deserialization in parallel
+        var tasks = manifestEntries.Select(async manifestEntry =>
         {
             var resolvedPath = ResolveDeckPath(manifestEntry);
-            var item = await LoadSingleDeckAsync(resolvedPath, validPlayerIds);
+            
+            if (_cachedDecks.TryGetValue(resolvedPath, out var cached))
+            {
+                return (resolvedPath, cached);
+            }
+
+            var cachedEntry = await LoadSingleDeckRawAsync(resolvedPath);
+            _cachedDecks.TryAdd(resolvedPath, cachedEntry);
+            return (resolvedPath, cachedEntry);
+        });
+
+        var loadedEntries = await Task.WhenAll(tasks);
+
+        // Run validations sequentially in memory (which is extremely fast and avoids concurrency issues on shared objects)
+        foreach (var (resolvedPath, cachedEntry) in loadedEntries)
+        {
+            var item = new DeckImportItemResult
+            {
+                FilePath = resolvedPath,
+                Deck = cachedEntry.Deck
+            };
+            item.ValidationMessages.AddRange(cachedEntry.LoadErrors);
+            if (cachedEntry.Deck != null)
+            {
+                item.ValidationMessages.AddRange(ValidateDeck(resolvedPath, cachedEntry.Deck, validPlayerIds));
+            }
             result.Items.Add(item);
         }
 
@@ -81,12 +158,9 @@ public class DeckImportService(HttpClient httpClient, ILogger<DeckImportService>
         return $"{DeckFilesFolder}/{trimmed}";
     }
 
-    private async Task<DeckImportItemResult> LoadSingleDeckAsync(string filePath, HashSet<int> validPlayerIds)
+    private async Task<CachedDeckFile> LoadSingleDeckRawAsync(string filePath)
     {
-        var item = new DeckImportItemResult
-        {
-            FilePath = filePath
-        };
+        var entry = new CachedDeckFile();
 
         string jsonContent;
         try
@@ -96,11 +170,11 @@ public class DeckImportService(HttpClient httpClient, ILogger<DeckImportService>
         catch (Exception ex)
         {
             _logger.LogError(ex, "Could not read deck file {FilePath}", filePath);
-            item.ValidationMessages.Add(new DeckValidationMessage(
+            entry.LoadErrors.Add(new DeckValidationMessage(
                 DeckValidationSeverity.Error,
                 "FILE_READ_FAILED",
                 $"Could not read file: {filePath}"));
-            return item;
+            return entry;
         }
 
         DeckFile? deck;
@@ -111,25 +185,24 @@ public class DeckImportService(HttpClient httpClient, ILogger<DeckImportService>
         catch (JsonException ex)
         {
             _logger.LogError(ex, "Failed to deserialize deck file {FilePath}", filePath);
-            item.ValidationMessages.Add(new DeckValidationMessage(
+            entry.LoadErrors.Add(new DeckValidationMessage(
                 DeckValidationSeverity.Error,
                 "DESERIALIZE_FAILED",
                 $"JSON deserialization failed for file: {filePath}"));
-            return item;
+            return entry;
         }
 
         if (deck == null)
         {
-            item.ValidationMessages.Add(new DeckValidationMessage(
+            entry.LoadErrors.Add(new DeckValidationMessage(
                 DeckValidationSeverity.Error,
                 "EMPTY_DECK",
                 "Deserialization produced an empty deck object."));
-            return item;
+            return entry;
         }
 
-        item.Deck = deck;
-        item.ValidationMessages.AddRange(ValidateDeck(filePath, deck, validPlayerIds));
-        return item;
+        entry.Deck = deck;
+        return entry;
     }
 
     private static IEnumerable<DeckValidationMessage> ValidateDeck(string filePath, DeckFile deck, HashSet<int> validPlayerIds)

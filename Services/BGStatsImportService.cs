@@ -8,6 +8,7 @@ public interface IBGStatsImportService
     Task<List<Play>> GetMagicPlaysAsync(HashSet<string>? variantFilter = null);
     Task<bool> ImportDataAsync(string jsonContent);
     Task<BGStatsExport?> GetCurrentDataAsync();
+    event Action? OnDataImported;
 }
 
 public class BGStatsImportService(HttpClient httpClient, ILogger<BGStatsImportService> logger, IGlobalFilterService globalFilterService) : IBGStatsImportService
@@ -19,6 +20,8 @@ public class BGStatsImportService(HttpClient httpClient, ILogger<BGStatsImportSe
     private int _magicGameId = -1;
     private readonly SemaphoreSlim _dataLoadSemaphore = new(1, 1);
     private readonly SemaphoreSlim _playsLoadSemaphore = new(1, 1);
+
+    public event Action? OnDataImported;
 
     public async Task<List<Play>> GetMagicPlaysAsync(HashSet<string>? variantFilter = null)
     {
@@ -95,6 +98,7 @@ public class BGStatsImportService(HttpClient httpClient, ILogger<BGStatsImportSe
 
                 _logger.LogInformation("Successfully imported BGStats data with {GameCount} games, {PlayCount} plays, {PlayerCount} players",
                     importedData.Games.Count, importedData.Plays.Count, importedData.Players.Count);
+                OnDataImported?.Invoke();
                 return true;
             }
             finally

@@ -1,0 +1,39 @@
+{
+  "playerRefId": 2,
+  "date": "2026-06-24",
+  "rank": 2,
+  "playerCount": 5,
+  "deckSize": 40,
+  "cards": [
+    { "name": "Infestation Sage", "count": 1 },
+    { "name": "Vampire Gourmand", "count": 1 },
+    { "name": "Hungry Ghoul", "count": 1 },
+    { "name": "Vengeful Bloodwitch", "count": 1 },
+    { "name": "Cathar Commando", "count": 1 },
+    { "name": "Resolute Reinforcements", "count": 1 },
+    { "name": "Dawnwing Marshal", "count": 1 },
+    { "name": "Sun-Blessed Healer", "count": 1 },
+    { "name": "Charming Prince", "count": 1 },
+    { "name": "Prideful Parent", "count": 1 },
+    { "name": "Scrawling Crawler", "count": 1 },
+    { "name": "Nine-Lives Familiar", "count": 1 },
+    { "name": "Driver of the Dead", "count": 1 },
+    { "name": "Tragic Banshee", "count": 1 },
+    { "name": "Liliana, Dreadhorde General", "count": 1 },
+    { "name": "Sire of Seven Deaths", "count": 1 },
+    { "name": "Pacifism", "count": 1 },
+    { "name": "Ravenous Amulet", "count": 1 },
+    { "name": "Make Your Move", "count": 1 },
+    { "name": "Day of Judgment", "count": 1 },
+    { "name": "Prayer of Binding", "count": 1 },
+    { "name": "Zombify", "count": 1 },
+    { "name": "Valkyrie's Call", "count": 1 },
+    { "name": "Orzhov Guildgate", "count": 1 },
+    { "name": "Swamp", "count": 8 },
+    { "name": "Plains", "count": 8 }
+  ],
+  "sideboard": [
+    { "name": "Felidar Retreat", "count": 1 },
+    { "name": "Herald of Eternal Dawn", "count": 1 }
+  ]
+}
